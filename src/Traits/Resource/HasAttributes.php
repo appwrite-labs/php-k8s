@@ -174,7 +174,7 @@ trait HasAttributes
      * @param  array  $parameters
      * @return mixed
      */
-    public function __call(string $method, array $parameters)
+    public function __call($method, $parameters)
     {
         if (static::hasMacro($method)) {
             return $this->macroCall($method, $parameters);
