@@ -1,5 +1,5 @@
 {
-    "name": "renoki-co/php-k8s",
+    "name": "appwrite-labs/php-k8s",
     "description": "Control your Kubernetes clusters with this PHP-based Kubernetes client. It supports any form of authentication, the exec API, and it has an easy implementation for CRDs.",
     "keywords": [
         "laravel",
@@ -15,14 +15,7 @@
         "kube"
     ],
     "license": "Apache-2.0",
-    "homepage": "https://github.com/renoki-co/php-k8s",
-    "authors": [
-        {
-            "name": "Alex Renoki",
-            "homepage": "https://github.com/rennokki",
-            "role": "Developer"
-        }
-    ],
+    "homepage": "https://github.com/appwrite-labs/php-k8s",
     "require": {
         "guzzlehttp/guzzle": "^6.5|^7.0",
         "illuminate/macroable": "^9.35|^10.1|^11.0",
