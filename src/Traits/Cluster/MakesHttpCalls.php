@@ -133,7 +133,7 @@ trait MakesHttpCalls
                 $results[] = (new $resourceClass($this, $item))->synced();
             }
 
-            return new ResourcesList($results);
+            return new ResourcesList($results, $json['metadata']);
         }
 
         // If the items does not exist, it means the Kind
