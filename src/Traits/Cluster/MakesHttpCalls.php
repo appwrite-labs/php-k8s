@@ -113,6 +113,11 @@ trait MakesHttpCalls
 
         $response = $this->call($method, $path, $payload, $query);
 
+        \var_dump($response->getHeaders());
+        \var_dump($response->getReasonPhrase());
+        \var_dump($response->getStatusCode());
+        \var_dump($response->getBody());
+
         $json = @json_decode($response->getBody(), true);
 
         // If the output is not JSONable, return the response itself.
