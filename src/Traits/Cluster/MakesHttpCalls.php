@@ -113,6 +113,7 @@ trait MakesHttpCalls
 
         $response = $this->call($method, $path, $payload, $query);
 
+        \var_dump($method . ': ' . $path);
         \var_dump($response->getStatusCode());
         \var_dump((string) $response->getBody());
 
