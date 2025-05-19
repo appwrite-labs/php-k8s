@@ -267,7 +267,9 @@ class KubernetesCluster
 
         $data = null;
 
+        \var_dump("Starting: " . \microtime(true));
         while (($data = fgets($sock)) == true) {
+            \var_dump("Chunk part: " . \microtime(true));
             $call = call_user_func($callback, $data);
 
             if (! is_null($call)) {
