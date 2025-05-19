@@ -267,15 +267,24 @@ class KubernetesCluster
 
         $data = null;
 
-        while (($data = fgets($sock)) == true) {
-            $call = call_user_func($callback, $data);
+        $chunk = '';
+        while (($data = fgets($sock, 64)) == true) {
+            $chunk .= $data;
 
-            if (! is_null($call)) {
-                fclose($sock);
+            $separator = \strrpos($chunk, "\n");
+            if ($separator !== false) {
+                $extra = \substr($chunk, $separator + \strlen("\n"));
+                $chunk = \substr($chunk, 0, $separator) . "\n";
 
-                unset($data);
+                $call = call_user_func($callback, $chunk);
+                if (!is_null($call)) {
+                    fclose($sock);
+                    unset($data);
+                    unset($chunk);
+                    return $call;
+                }
 
-                return $call;
+                $chunk = $extra;
             }
         }
     }
