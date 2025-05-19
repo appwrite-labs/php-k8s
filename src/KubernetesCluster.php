@@ -213,9 +213,7 @@ class KubernetesCluster
             default: break;
         }
 
-        $method = static::$operations[$operation] ?? static::$operations[static::GET_OP];
-
-        return $this->makeRequest($method, $path, $payload, $query);
+        return $this->makeRequest($operation, $path, $payload, $query);
     }
 
     /**
@@ -303,7 +301,7 @@ class KubernetesCluster
         array $query = ['pretty' => 1, 'stdin' => 1, 'stdout' => 1, 'stderr' => 1, 'tty' => 1]
     ) {
         try {
-            return $this->makeRequest(static::$operations[static::EXEC_OP], $path, '', $query);
+            return $this->makeRequest(static::EXEC_OP, $path, '', $query);
         } catch (KubernetesAPIException $e) {
             $payload = $e->getPayload();
 
@@ -336,7 +334,7 @@ class KubernetesCluster
         array $query = ['pretty' => 1, 'stdin' => 1, 'stdout' => 1, 'stderr' => 1, 'tty' => 1]
     ) {
         try {
-            return $this->makeRequest(static::$operations[static::ATTACH_OP], $path, '', $query);
+            return $this->makeRequest(static::ATTACH_OP, $path, '', $query);
         } catch (KubernetesAPIException $e) {
             $payload = $e->getPayload();
 

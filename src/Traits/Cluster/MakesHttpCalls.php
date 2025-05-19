@@ -99,7 +99,7 @@ trait MakesHttpCalls
     /**
      * Call the API with the specified method and path.
      *
-     * @param  string  $method
+     * @param  string  $operation
      * @param  string  $path
      * @param  string  $payload
      * @param  array  $query
@@ -107,11 +107,16 @@ trait MakesHttpCalls
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
-    protected function makeRequest(string $method, string $path, string $payload = '', array $query = ['pretty' => 1])
+    protected function makeRequest(string $operation, string $path, string $payload = '', array $query = ['pretty' => 1])
     {
         $resourceClass = $this->resourceClass;
 
+        $method = static::$operations[$operation] ?? static::$operations[static::GET_OP];
         $response = $this->call($method, $path, $payload, $query);
+
+        if ($operation === static::LOG_OP) {
+            return (string) $response->getBody();
+        }
 
         $json = @json_decode($response->getBody(), true);
 
@@ -119,7 +124,7 @@ trait MakesHttpCalls
         // This can be encountered in case of a pod log request, for example,
         // where the data returned are just console logs.
 
-        if (! $json) {
+        if (!$json) {
             return (string) $response->getBody();
         }
 
