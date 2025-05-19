@@ -263,22 +263,27 @@ class KubernetesCluster
      */
     protected function watchLogsPath(string $path, Closure $callback, array $query = ['pretty' => 1])
     {
-        \var_dump("Starting0: " . \microtime(true));
         $sock = $this->createSocketConnection($this->getCallableUrl($path, $query));
 
         $data = null;
 
-        \var_dump("Starting1: " . \microtime(true));
-        while (($data = fgets($sock, 100)) == true) {
-            \var_dump("Chunk part: " . \microtime(true));
-            $call = call_user_func($callback, $data);
+        $chunk = '';
+        while (($data = fgets($sock, 64)) == true) {
+            $chunk .= $data;
 
-            if (! is_null($call)) {
-                fclose($sock);
+            $separator = \strpos($chunk, "\n");
+            if ($separator !== false) {
+                $extra = \substr($chunk, $separator + \strlen("\n"));
+                $chunk = \substr($chunk, 0, $separator);
 
-                unset($data);
+                $call = call_user_func($callback, $data);
+                if (!is_null($call)) {
+                    fclose($sock);
+                    unset($data);
+                    return $call;
+                }
 
-                return $call;
+                $chunk = $extra;
             }
         }
     }
