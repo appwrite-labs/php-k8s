@@ -271,7 +271,7 @@ class KubernetesCluster
         while (($data = fgets($sock, 64)) == true) {
             $chunk .= $data;
 
-            $separator = \strpos($chunk, "\n");
+            $separator = \strrpos($chunk, "\n");
             if ($separator !== false) {
                 $extra = \substr($chunk, $separator + \strlen("\n"));
                 $chunk = \substr($chunk, 0, $separator) . "\n";
