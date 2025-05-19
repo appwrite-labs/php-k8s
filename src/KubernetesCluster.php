@@ -274,12 +274,13 @@ class KubernetesCluster
             $separator = \strpos($chunk, "\n");
             if ($separator !== false) {
                 $extra = \substr($chunk, $separator + \strlen("\n"));
-                $chunk = \substr($chunk, 0, $separator);
+                $chunk = \substr($chunk, 0, $separator) + "\n";
 
-                $call = call_user_func($callback, $data);
+                $call = call_user_func($callback, $chunk);
                 if (!is_null($call)) {
                     fclose($sock);
                     unset($data);
+                    unset($chunk);
                     return $call;
                 }
 
