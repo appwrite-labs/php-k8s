@@ -84,10 +84,10 @@ trait MakesHttpCalls
                 RequestOptions::BODY => $payload,
             ]);
         } catch (ClientException $e) {
-            $errorPayload = json_decode((string) $e->getResponse()->getBody(), true);
+            $errorPayload = json_decode((string) $e->getResponse()->getBody()->getContents(), true);
 
             throw new KubernetesAPIException(
-                $e->getMessage(),
+                $errorPayload['message'] ?? $e->getMessage(),
                 $errorPayload['code'] ?? 0,
                 $errorPayload
             );
