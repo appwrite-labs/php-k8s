@@ -188,7 +188,7 @@ trait AuthenticatesCluster
      * @param  string  $url
      * @return $this
      */
-    public static function inClusterConfiguration(string $url = 'https://kubernetes.default.svc')
+    public static function inClusterConfiguration(string $url = 'https://kubernetes.default.svc.cluster.local')
     {
         $cluster = new static($url);
 
