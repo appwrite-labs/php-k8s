@@ -33,12 +33,11 @@ trait RunsClusterOperations
     /**
      * Specify the cluster to attach to.
      *
-     * @param  \RenokiCo\PhpK8s\KubernetesCluster  $cluster
      * @return $this
      */
-    public function onCluster(KubernetesCluster $cluster)
+    public function onCluster(KubernetesCluster $kubernetesCluster)
     {
-        $this->cluster = $cluster;
+        $this->cluster = $kubernetesCluster;
 
         return $this;
     }
@@ -76,7 +75,6 @@ trait RunsClusterOperations
     /**
      * Make a call to the cluster to get a fresh instance.
      *
-     * @param  array  $query
      * @return $this
      */
     public function refresh(array $query = ['pretty' => 1])
@@ -87,7 +85,6 @@ trait RunsClusterOperations
     /**
      * Make a call to the cluster to get fresh original values.
      *
-     * @param  array  $query
      * @return $this
      */
     public function refreshOriginal(array $query = ['pretty' => 1])
@@ -114,14 +111,13 @@ trait RunsClusterOperations
      * Create or update the resource, wether the resource exists
      * or not within the cluster.
      *
-     * @param  array  $query
      * @return $this
      */
     public function syncWithCluster(array $query = ['pretty' => 1])
     {
         try {
             return $this->get($query);
-        } catch (KubernetesAPIException $e) {
+        } catch (KubernetesAPIException) {
             return $this->create($query);
         }
     }
@@ -129,7 +125,6 @@ trait RunsClusterOperations
     /**
      * Create or update the app based on existence.
      *
-     * @param  array  $query
      * @return $this
      */
     public function createOrUpdate(array $query = ['pretty' => 1])
@@ -146,15 +141,13 @@ trait RunsClusterOperations
     /**
      * Get a list with all resources.
      *
-     * @param  array  $query
      * @return \RenokiCo\PhpK8s\ResourcesList
-     *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
     public function all(array $query = ['pretty' => 1])
     {
         return $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::GET_OP,
                 $this->allResourcesPath(),
@@ -166,15 +159,13 @@ trait RunsClusterOperations
     /**
      * Get a list with all resources from all namespaces.
      *
-     * @param  array  $query
      * @return \RenokiCo\PhpK8s\ResourcesList
-     *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
     public function allNamespaces(array $query = ['pretty' => 1])
     {
         return $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::GET_OP,
                 $this->allResourcesPath(false),
@@ -186,15 +177,13 @@ trait RunsClusterOperations
     /**
      * Get a fresh instance from the cluster.
      *
-     * @param  array  $query
      * @return \RenokiCo\PhpK8s\Kinds\K8sResource
-     *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
     public function get(array $query = ['pretty' => 1])
     {
         return $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::GET_OP,
                 $this->resourcePath(),
@@ -206,15 +195,13 @@ trait RunsClusterOperations
     /**
      * Create the resource.
      *
-     * @param  array  $query
      * @return \RenokiCo\PhpK8s\Kinds\K8sResource
-     *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
     public function create(array $query = ['pretty' => 1])
     {
         return $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::CREATE_OP,
                 $this->allResourcesPath(),
@@ -226,8 +213,6 @@ trait RunsClusterOperations
     /**
      * Update the resource.
      *
-     * @param  array  $query
-     * @return bool
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
@@ -242,7 +227,7 @@ trait RunsClusterOperations
         }
 
         $instance = $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::REPLACE_OP,
                 $this->resourcePath(),
@@ -258,10 +243,7 @@ trait RunsClusterOperations
     /**
      * Delete the resource.
      *
-     * @param  array  $query
      * @param  null|int  $gracePeriod
-     * @param  string  $propagationPolicy
-     * @return bool
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
@@ -281,7 +263,7 @@ trait RunsClusterOperations
         $this->refresh();
 
         $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::DELETE_OP,
                 $this->resourcePath(),
@@ -297,8 +279,6 @@ trait RunsClusterOperations
     /**
      * Watch the resources list until the closure returns true or false.
      *
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesWatchException
@@ -307,12 +287,12 @@ trait RunsClusterOperations
     {
         if (! $this instanceof Watchable) {
             throw new KubernetesWatchException(
-                'The resource '.get_class($this).' does not support watch actions.'
+                'The resource '.$this::class.' does not support watch actions.'
             );
         }
 
         return $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::WATCH_OP,
                 $this->allResourcesWatchPath(),
@@ -324,8 +304,6 @@ trait RunsClusterOperations
     /**
      * Watch the specific resource until the closure returns true or false.
      *
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesWatchException
@@ -334,12 +312,12 @@ trait RunsClusterOperations
     {
         if (! $this instanceof Watchable) {
             throw new KubernetesWatchException(
-                'The resource '.get_class($this).' does not support watch actions.'
+                'The resource '.$this::class.' does not support watch actions.'
             );
         }
 
         return $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::WATCH_OP,
                 $this->resourceWatchPath(),
@@ -351,7 +329,6 @@ trait RunsClusterOperations
     /**
      * Get a specific resource's logs.
      *
-     * @param  array  $query
      * @return string
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesLogsException
@@ -361,12 +338,12 @@ trait RunsClusterOperations
     {
         if (! $this instanceof Loggable) {
             throw new KubernetesLogsException(
-                'The resource '.get_class($this).' does not support logs.'
+                'The resource '.$this::class.' does not support logs.'
             );
         }
 
         return $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::LOG_OP,
                 $this->resourceLogPath(),
@@ -378,10 +355,7 @@ trait RunsClusterOperations
     /**
      * Watch the specific resource's logs until the closure returns true or false.
      *
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return mixed
-     *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesWatchException
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesLogsException
      */
@@ -389,13 +363,13 @@ trait RunsClusterOperations
     {
         if (! $this instanceof Loggable) {
             throw new KubernetesWatchException(
-                'The resource '.get_class($this).' does not support logs.'
+                'The resource '.$this::class.' does not support logs.'
             );
         }
 
         if (! $this instanceof Watchable) {
             throw new KubernetesLogsException(
-                'The resource '.get_class($this).' does not support watch actions.'
+                'The resource '.$this::class.' does not support watch actions.'
             );
         }
 
@@ -403,7 +377,7 @@ trait RunsClusterOperations
         $query = array_merge($query, ['follow' => 1]);
 
         return $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::WATCH_LOGS_OP,
                 $this->resourceLogPath(),
@@ -415,7 +389,6 @@ trait RunsClusterOperations
     /**
      * Get a specific resource scaling data.
      *
-     * @return \RenokiCo\PhpK8s\Kinds\K8sScale
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesScalingException
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -424,7 +397,7 @@ trait RunsClusterOperations
     {
         if (! $this instanceof Scalable) {
             throw new KubernetesScalingException(
-                'The resource '.get_class($this).' does not support scaling.'
+                'The resource '.$this::class.' does not support scaling.'
             );
         }
 
@@ -446,8 +419,6 @@ trait RunsClusterOperations
      * Exec a command on the current resource.
      *
      * @param  string|array  $command
-     * @param  string|null  $container
-     * @param  array  $query
      * @return string
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesExecException
@@ -455,49 +426,45 @@ trait RunsClusterOperations
      */
     public function exec(
         $command,
-        string $container = null,
+        ?string $container = null,
         array $query = ['pretty' => 1, 'stdin' => 1, 'stdout' => 1, 'stderr' => 1, 'tty' => 1]
     ) {
         if (! $this instanceof Executable) {
             throw new KubernetesExecException(
-                'The resource '.get_class($this).' does not support exec commands.'
+                'The resource '.$this::class.' does not support exec commands.'
             );
         }
 
         return $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::EXEC_OP,
                 $this->resourceExecPath(),
                 '',
-                ['command' => array_map('urlencode', $command), 'container' => $container] + $query
+                ['command' => array_map(urlencode(...), $command), 'container' => $container] + $query
             );
     }
 
     /**
      * Attach to the current resource.
      *
-     * @param  \Closure|null  $callback
-     * @param  string|null  $container
-     * @param  array  $query
      * @return string
-     *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAttachException
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
     public function attach(
-        Closure $callback = null,
-        string $container = null,
+        ?Closure $callback = null,
+        ?string $container = null,
         array $query = ['pretty' => 1, 'stdin' => 1, 'stdout' => 1, 'stderr' => 1, 'tty' => 1]
     ) {
         if (! $this instanceof Attachable) {
             throw new KubernetesAttachException(
-                'The resource '.get_class($this).' does not support attach commands.'
+                'The resource '.$this::class.' does not support attach commands.'
             );
         }
 
         return $this->cluster
-            ->setResourceClass(get_class($this))
+            ->setResourceClass($this::class)
             ->runOperation(
                 KubernetesCluster::ATTACH_OP,
                 $this->resourceAttachPath(),
@@ -508,104 +475,83 @@ trait RunsClusterOperations
 
     /**
      * Get the path, prefixed by '/', that points to the resources list.
-     *
-     * @param  bool  $withNamespace
-     * @return string
      */
     public function allResourcesPath(bool $withNamespace = true): string
     {
-        return "{$this->getApiPathPrefix($withNamespace)}/".static::getPlural();
+        return $this->getApiPathPrefix($withNamespace) . '/'.static::getPlural();
     }
 
     /**
      * Get the path, prefixed by '/', that points to the specific resource.
-     *
-     * @return string
      */
     public function resourcePath(): string
     {
-        return "{$this->getApiPathPrefix()}/".static::getPlural()."/{$this->getIdentifier()}";
+        return $this->getApiPathPrefix() . '/'.static::getPlural().('/' . $this->getIdentifier());
     }
 
     /**
      * Get the path, prefixed by '/', that points to the resource watch.
-     *
-     * @return string
      */
     public function allResourcesWatchPath(): string
     {
-        return "{$this->getApiPathPrefix(false)}/watch/".static::getPlural();
+        return $this->getApiPathPrefix(false) . '/watch/'.static::getPlural();
     }
 
     /**
      * Get the path, prefixed by '/', that points to the specific resource to watch.
-     *
-     * @return string
      */
     public function resourceWatchPath(): string
     {
-        return "{$this->getApiPathPrefix(true, 'watch')}/".static::getPlural()."/{$this->getIdentifier()}";
+        return $this->getApiPathPrefix(true, 'watch') . '/'.static::getPlural().('/' . $this->getIdentifier());
     }
 
     /**
      * Get the path, prefixed by '/', that points to the resource scale.
-     *
-     * @return string
      */
     public function resourceScalePath(): string
     {
-        return "{$this->getApiPathPrefix()}/".static::getPlural()."/{$this->getIdentifier()}/scale";
+        return $this->getApiPathPrefix() . '/'.static::getPlural().sprintf('/%s/scale', $this->getIdentifier());
     }
 
     /**
      * Get the path, prefixed by '/', that points to the specific resource to log.
-     *
-     * @return string
      */
     public function resourceLogPath(): string
     {
-        return "{$this->getApiPathPrefix()}/".static::getPlural()."/{$this->getIdentifier()}/log";
+        return $this->getApiPathPrefix() . '/'.static::getPlural().sprintf('/%s/log', $this->getIdentifier());
     }
 
     /**
      * Get the path, prefixed by '/', that points to the specific resource to exec.
-     *
-     * @return string
      */
     public function resourceExecPath(): string
     {
-        return "{$this->getApiPathPrefix()}/".static::getPlural()."/{$this->getIdentifier()}/exec";
+        return $this->getApiPathPrefix() . '/'.static::getPlural().sprintf('/%s/exec', $this->getIdentifier());
     }
 
     /**
      * Get the path, prefixed by '/', that points to the specific resource to attach.
-     *
-     * @return string
      */
     public function resourceAttachPath(): string
     {
-        return "{$this->getApiPathPrefix()}/".static::getPlural()."/{$this->getIdentifier()}/attach";
+        return $this->getApiPathPrefix() . '/'.static::getPlural().sprintf('/%s/attach', $this->getIdentifier());
     }
 
     /**
      * Get the prefix path for the resource.
-     *
-     * @param  bool  $withNamespace
-     * @param  string|null  $preNamespaceAction
-     * @return string
      */
-    protected function getApiPathPrefix(bool $withNamespace = true, string $preNamespaceAction = null): string
+    protected function getApiPathPrefix(bool $withNamespace = true, ?string $preNamespaceAction = null): string
     {
         $version = $this->getApiVersion();
 
-        $path = $version === 'v1' ? '/api/v1' : "/apis/{$version}";
+        $path = $version === 'v1' ? '/api/v1' : '/apis/' . $version;
 
         if ($preNamespaceAction) {
-            $path .= "/{$preNamespaceAction}";
+            $path .= '/' . $preNamespaceAction;
         }
 
         if ($withNamespace && static::$namespaceable) {
-            $path .= "/namespaces/{$this->getNamespace()}";
+            $path .= '/namespaces/' . $this->getNamespace();
         }
 
         return $path;

@@ -10,7 +10,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class DeploymentTest extends TestCase
 {
-    public function test_deployment_build()
+    public function test_deployment_build(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -19,28 +19,28 @@ class DeploymentTest extends TestCase
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setContainers([$mysql]);
 
-        $dep = $this->cluster->deployment()
+        $k8sDeployment = $this->cluster->deployment()
             ->setName('mysql')
             ->setLabels(['tier' => 'backend'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setReplicas(3)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
-        $this->assertEquals('apps/v1', $dep->getApiVersion());
-        $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
-        $this->assertEquals(['mysql/annotation' => 'yes'], $dep->getAnnotations());
-        $this->assertEquals(3, $dep->getReplicas());
-        $this->assertEquals($pod->getName(), $dep->getTemplate()->getName());
+        $this->assertEquals('apps/v1', $k8sDeployment->getApiVersion());
+        $this->assertEquals('mysql', $k8sDeployment->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sDeployment->getLabels());
+        $this->assertEquals(['mysql/annotation' => 'yes'], $k8sDeployment->getAnnotations());
+        $this->assertEquals(3, $k8sDeployment->getReplicas());
+        $this->assertEquals($k8sPod->getName(), $k8sDeployment->getTemplate()->getName());
 
-        $this->assertInstanceOf(K8sPod::class, $dep->getTemplate());
+        $this->assertInstanceOf(K8sPod::class, $k8sDeployment->getTemplate());
     }
 
-    public function test_deployment_from_yaml()
+    public function test_deployment_from_yaml(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -49,7 +49,7 @@ class DeploymentTest extends TestCase
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setContainers([$mysql]);
 
@@ -60,12 +60,12 @@ class DeploymentTest extends TestCase
         $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
         $this->assertEquals(['mysql/annotation' => 'yes'], $dep->getAnnotations());
         $this->assertEquals(3, $dep->getReplicas());
-        $this->assertEquals($pod->getName(), $dep->getTemplate()->getName());
+        $this->assertEquals($k8sPod->getName(), $dep->getTemplate()->getName());
 
         $this->assertInstanceOf(K8sPod::class, $dep->getTemplate());
     }
 
-    public function test_deployment_api_interaction()
+    public function test_deployment_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -78,7 +78,7 @@ class DeploymentTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -89,7 +89,7 @@ class DeploymentTest extends TestCase
             ->addPort(3307, 'TCP', 'mysql-alt')
             ->setEnv(['MYSQL_ROOT_PASSWORD' => 'test']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setLabels(['tier' => 'backend', 'deployment-name' => 'mysql'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
@@ -103,7 +103,7 @@ class DeploymentTest extends TestCase
             ->setReplicas(1)
             ->setUpdateStrategy('RollingUpdate')
             ->setMinReadySeconds(0)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
         $this->assertFalse($dep->isSynced());
         $this->assertFalse($dep->exists());
@@ -121,16 +121,16 @@ class DeploymentTest extends TestCase
         $this->assertEquals(['mysql/annotation' => 'yes'], $dep->getAnnotations());
         $this->assertEquals(1, $dep->getReplicas());
         $this->assertEquals(0, $dep->getMinReadySeconds());
-        $this->assertEquals($pod->getName(), $dep->getTemplate()->getName());
+        $this->assertEquals($k8sPod->getName(), $dep->getTemplate()->getName());
 
         $this->assertInstanceOf(K8sPod::class, $dep->getTemplate());
 
         while (! $dep->allPodsAreRunning()) {
-            dump("Waiting for pods of {$dep->getName()} to be up and running...");
+            dump(sprintf('Waiting for pods of %s to be up and running...', $dep->getName()));
             sleep(1);
         }
 
-        K8sDeployment::selectPods(function ($dep) {
+        K8sDeployment::selectPods(function ($dep): array {
             $this->assertInstanceOf(K8sDeployment::class, $dep);
 
             return ['tier' => 'backend'];
@@ -151,7 +151,7 @@ class DeploymentTest extends TestCase
         $dep->refresh();
 
         while ($dep->getReadyReplicasCount() === 0) {
-            dump("Waiting for pods of {$dep->getName()} to have ready replicas...");
+            dump(sprintf('Waiting for pods of %s to have ready replicas...', $dep->getName()));
             sleep(1);
             $dep->refresh();
         }
@@ -164,101 +164,101 @@ class DeploymentTest extends TestCase
         $this->assertTrue(is_array($dep->getConditions()));
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $deployments = $this->cluster->getAllDeployments();
+        $allDeployments = $this->cluster->getAllDeployments();
 
-        $this->assertInstanceOf(ResourcesList::class, $deployments);
+        $this->assertInstanceOf(ResourcesList::class, $allDeployments);
 
-        foreach ($deployments as $dep) {
-            $this->assertInstanceOf(K8sDeployment::class, $dep);
+        foreach ($allDeployments as $allDeployment) {
+            $this->assertInstanceOf(K8sDeployment::class, $allDeployment);
 
-            $this->assertNotNull($dep->getName());
+            $this->assertNotNull($allDeployment->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $dep = $this->cluster->getDeploymentByName('mysql');
+        $k8sDeployment = $this->cluster->getDeploymentByName('mysql');
 
-        $this->assertInstanceOf(K8sDeployment::class, $dep);
+        $this->assertInstanceOf(K8sDeployment::class, $k8sDeployment);
 
-        $this->assertTrue($dep->isSynced());
+        $this->assertTrue($k8sDeployment->isSynced());
 
-        $this->assertEquals('apps/v1', $dep->getApiVersion());
-        $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
-        $this->assertEquals(['mysql/annotation' => 'yes', 'deployment.kubernetes.io/revision' => '1'], $dep->getAnnotations());
-        $this->assertEquals(1, $dep->getReplicas());
+        $this->assertEquals('apps/v1', $k8sDeployment->getApiVersion());
+        $this->assertEquals('mysql', $k8sDeployment->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sDeployment->getLabels());
+        $this->assertEquals(['mysql/annotation' => 'yes', 'deployment.kubernetes.io/revision' => '1'], $k8sDeployment->getAnnotations());
+        $this->assertEquals(1, $k8sDeployment->getReplicas());
 
-        $this->assertInstanceOf(K8sPod::class, $dep->getTemplate());
+        $this->assertInstanceOf(K8sPod::class, $k8sDeployment->getTemplate());
     }
 
-    public function attachPodAutoscaler()
+    public function attachPodAutoscaler(): void
     {
-        $dep = $this->cluster->getDeploymentByName('mysql');
+        $k8sDeployment = $this->cluster->getDeploymentByName('mysql');
 
-        $cpuMetric = K8s::metric()->cpu()->averageUtilization(70);
+        $resourceMetric = K8s::metric()->cpu()->averageUtilization(70);
 
-        $hpa = $this->cluster->horizontalPodAutoscaler()
+        $k8sResource = $this->cluster->horizontalPodAutoscaler()
             ->setName('deploy-mysql')
-            ->setResource($dep)
-            ->addMetrics([$cpuMetric])
-            ->setMetrics([$cpuMetric])
+            ->setResource($k8sDeployment)
+            ->addMetrics([$resourceMetric])
+            ->setMetrics([$resourceMetric])
             ->min(1)
             ->max(10)
             ->create();
 
-        while ($hpa->getCurrentReplicasCount() < 1) {
-            $hpa->refresh();
-            dump("Awaiting for horizontal pod autoscaler {$hpa->getName()} to read the current replicas...");
+        while ($k8sResource->getCurrentReplicasCount() < 1) {
+            $k8sResource->refresh();
+            dump(sprintf('Awaiting for horizontal pod autoscaler %s to read the current replicas...', $k8sResource->getName()));
             sleep(1);
         }
 
-        $this->assertEquals(1, $hpa->getCurrentReplicasCount());
+        $this->assertEquals(1, $k8sResource->getCurrentReplicasCount());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $dep = $this->cluster->getDeploymentByName('mysql');
+        $k8sDeployment = $this->cluster->getDeploymentByName('mysql');
 
-        $this->assertTrue($dep->isSynced());
+        $this->assertTrue($k8sDeployment->isSynced());
 
-        $dep->setAnnotations([]);
+        $k8sDeployment->setAnnotations([]);
 
-        $dep->createOrUpdate();
+        $k8sDeployment->createOrUpdate();
 
-        $this->assertTrue($dep->isSynced());
+        $this->assertTrue($k8sDeployment->isSynced());
 
-        $this->assertEquals('apps/v1', $dep->getApiVersion());
-        $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
-        $this->assertEquals([], $dep->getAnnotations());
-        $this->assertEquals(2, $dep->getReplicas());
+        $this->assertEquals('apps/v1', $k8sDeployment->getApiVersion());
+        $this->assertEquals('mysql', $k8sDeployment->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sDeployment->getLabels());
+        $this->assertEquals([], $k8sDeployment->getAnnotations());
+        $this->assertEquals(2, $k8sDeployment->getReplicas());
 
-        $this->assertInstanceOf(K8sPod::class, $dep->getTemplate());
+        $this->assertInstanceOf(K8sPod::class, $k8sDeployment->getTemplate());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $dep = $this->cluster->getDeploymentByName('mysql');
-        $hpa = $this->cluster->getHorizontalPodAutoscalerByName('deploy-mysql');
+        $k8sDeployment = $this->cluster->getDeploymentByName('mysql');
+        $k8sHorizontalPodAutoscaler = $this->cluster->getHorizontalPodAutoscalerByName('deploy-mysql');
 
-        $this->assertTrue($dep->delete());
-        $this->assertTrue($hpa->delete());
+        $this->assertTrue($k8sDeployment->delete());
+        $this->assertTrue($k8sHorizontalPodAutoscaler->delete());
 
-        while ($hpa->exists()) {
-            dump("Awaiting for horizontal pod autoscaler {$hpa->getName()} to be deleted...");
+        while ($k8sHorizontalPodAutoscaler->exists()) {
+            dump(sprintf('Awaiting for horizontal pod autoscaler %s to be deleted...', $k8sHorizontalPodAutoscaler->getName()));
             sleep(1);
         }
 
-        while ($dep->exists()) {
-            dump("Awaiting for deployment {$dep->getName()} to be deleted...");
+        while ($k8sDeployment->exists()) {
+            dump(sprintf('Awaiting for deployment %s to be deleted...', $k8sDeployment->getName()));
             sleep(1);
         }
 
-        while ($dep->getPods()->count() > 0) {
-            dump("Awaiting for deployment {$dep->getName()}'s pods to be deleted...");
+        while ($k8sDeployment->getPods()->count() > 0) {
+            dump(sprintf("Awaiting for deployment %s's pods to be deleted...", $k8sDeployment->getName()));
             sleep(1);
         }
 
@@ -268,7 +268,7 @@ class DeploymentTest extends TestCase
         $this->cluster->getHorizontalPodAutoscalerByName('deploy-mysql');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->deployment()->watchAll(function ($type, $dep) {
             if ($dep->getName() === 'mysql') {
@@ -279,30 +279,28 @@ class DeploymentTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->deployment()->watchByName('mysql', function ($type, $dep) {
-            return $dep->getName() === 'mysql';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->deployment()->watchByName('mysql', fn($type, $dep): bool => $dep->getName() === 'mysql', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }
 
-    public function runScalingTests()
+    public function runScalingTests(): void
     {
-        $dep = $this->cluster->getDeploymentByName('mysql');
+        $k8sDeployment = $this->cluster->getDeploymentByName('mysql');
 
-        $scaler = $dep->scale(2);
+        $k8sScale = $k8sDeployment->scale(2);
 
-        while ($dep->getReadyReplicasCount() < 2 || $scaler->getReplicas() < 2) {
-            dump("Awaiting for deployment {$dep->getName()} to scale to 2 replicas...");
-            $scaler->refresh();
-            $dep->refresh();
+        while ($k8sDeployment->getReadyReplicasCount() < 2 || $k8sScale->getReplicas() < 2) {
+            dump(sprintf('Awaiting for deployment %s to scale to 2 replicas...', $k8sDeployment->getName()));
+            $k8sScale->refresh();
+            $k8sDeployment->refresh();
             sleep(1);
         }
 
-        $this->assertEquals(2, $dep->getReadyReplicasCount());
-        $this->assertEquals(2, $scaler->getReplicas());
-        $this->assertCount(2, $dep->getPods());
+        $this->assertEquals(2, $k8sDeployment->getReadyReplicasCount());
+        $this->assertEquals(2, $k8sScale->getReplicas());
+        $this->assertCount(2, $k8sDeployment->getPods());
     }
 }

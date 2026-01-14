@@ -24,11 +24,8 @@ trait LoadsFromKubeConfig
 
     /**
      * Set the temporary folder for the writings.
-     *
-     * @param  string  $tempFolder
-     * @return void
      */
-    public static function setTempFolder(string $tempFolder)
+    public static function setTempFolder(string $tempFolder): void
     {
         static::$tempFolder = $tempFolder;
     }
@@ -37,27 +34,29 @@ trait LoadsFromKubeConfig
      * Loads the configuration fro the KubernetesCluster instance
      * according to the current KUBECONFIG environment variable.
      *
-     * @param  string|null  $context
      * @return \RenokiCo\PhpK8s\KubernetesCluster
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubeConfigClusterNotFound
      * @throws \RenokiCo\PhpK8s\Exceptions\KubeConfigContextNotFound
      * @throws \RenokiCo\PhpK8s\Exceptions\KubeConfigUserNotFound
      */
-    public static function fromKubeConfigVariable(string $context = null)
+    public static function fromKubeConfigVariable(?string $context = null)
     {
-        /** @var \RenokiCo\PhpK8s\KubernetesCluster $this */
-        $cluster = new static;
+        $static = new static;
 
         if (! isset($_SERVER['KUBECONFIG'])) {
-            return $cluster;
+            return $static;
         }
 
-        $paths = array_unique(explode(':', $_SERVER['KUBECONFIG']));
+        $paths = array_unique(explode(':', (string) $_SERVER['KUBECONFIG']));
         $kubeconfig = [];
 
         foreach ($paths as $path) {
-            if (! @is_readable($path) || ($yaml = yaml_parse_file($path)) === false) {
+            if (! @is_readable($path)) {
+                continue;
+            }
+
+            if (($yaml = yaml_parse_file($path)) === false) {
                 continue;
             }
 
@@ -65,39 +64,34 @@ trait LoadsFromKubeConfig
         }
 
         if ($kubeconfig === []) {
-            return $cluster;
+            return $static;
         }
 
         if (! $context && isset($kubeconfig['current-context'])) {
             $context = $kubeconfig['current-context'];
         }
 
-        return $cluster->loadKubeConfigFromArray($kubeconfig, $context);
+        return $static->loadKubeConfigFromArray($kubeconfig, $context);
     }
 
     /**
      * Load configuration from a Kube Config context.
      *
-     * @param  string  $yaml
-     * @param  string|null  $context
      * @return \RenokiCo\PhpK8s\KubernetesCluster
      */
-    public static function fromKubeConfigYaml(string $yaml, string $context = null)
+    public static function fromKubeConfigYaml(string $yaml, ?string $context = null)
     {
-        /** @var \RenokiCo\PhpK8s\KubernetesCluster $this */
-        $cluster = new static;
+        $static = new static;
 
-        return $cluster->loadKubeConfigFromArray(yaml_parse($yaml), $context);
+        return $static->loadKubeConfigFromArray(yaml_parse($yaml), $context);
     }
 
     /**
      * Load configuration from a Kube Config file context.
      *
-     * @param  string  $path
-     * @param  string|null  $context
      * @return \RenokiCo\PhpK8s\KubernetesCluster
      */
-    public static function fromKubeConfigYamlFile(string $path = '/.kube/config', string $context = null)
+    public static function fromKubeConfigYamlFile(string $path = '/.kube/config', ?string $context = null)
     {
         return (new static)->fromKubeConfigYaml(file_get_contents($path), $context);
     }
@@ -105,30 +99,27 @@ trait LoadsFromKubeConfig
     /**
      * Load configuration from an Array.
      *
-     * @param  array  $kubeConfigArray
-     * @param  string|null  $context
      * @return \RenokiCo\PhpK8s\KubernetesCluster
      */
-    public static function fromKubeConfigArray(array $kubeConfigArray, string $context = null)
+    public static function fromKubeConfigArray(array $kubeConfigArray, ?string $context = null)
     {
-        $cluster = new static;
+        $static = new static;
 
-        return $cluster->loadKubeConfigFromArray($kubeConfigArray, $context);
+        return $static->loadKubeConfigFromArray($kubeConfigArray, $context);
     }
 
     /**
      * Load the Kube Config configuration from an array,
      * coming from a Kube Config file.
      *
-     * @param  array  $kubeconfig
-     * @param  string|null  $context
      * @return \RenokiCo\PhpK8s\KubernetesCluster
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubeConfigClusterNotFound
      * @throws \RenokiCo\PhpK8s\Exceptions\KubeConfigContextNotFound
      * @throws \RenokiCo\PhpK8s\Exceptions\KubeConfigUserNotFound
+     * @param array<string, mixed> $kubeconfig
      */
-    protected function loadKubeConfigFromArray(array $kubeconfig, string $context = null)
+    protected function loadKubeConfigFromArray(array $kubeconfig, ?string $context = null)
     {
         /** @var \RenokiCo\PhpK8s\KubernetesCluster $this */
 
@@ -139,7 +130,7 @@ trait LoadsFromKubeConfig
         $contextConfig = collect($kubeconfig['contexts'] ?? [])->firstWhere('name', $context);
 
         if (! $contextConfig) {
-            throw new KubeConfigContextNotFound("The context {$context} does not exist in the provided Kube Config file.");
+            throw new KubeConfigContextNotFound(sprintf('The context %s does not exist in the provided Kube Config file.', $context));
         }
 
         ['context' => ['cluster' => $cluster, 'user' => $user]] = $contextConfig;
@@ -149,13 +140,13 @@ trait LoadsFromKubeConfig
         }
 
         if (! $clusterConfig = collect($kubeconfig['clusters'] ?? [])->where('name', $cluster)->first()) {
-            throw new KubeConfigClusterNotFound("The cluster {$cluster} does not exist in the provided Kube Config file.");
+            throw new KubeConfigClusterNotFound(sprintf('The cluster %s does not exist in the provided Kube Config file.', $cluster));
         }
 
         $url = $clusterConfig['cluster']['server'];
 
         if (! $userConfig = collect($kubeconfig['users'] ?? [])->where('name', $user)->first()) {
-            throw new KubeConfigUserNotFound("The user {$user} does not exist in the provided Kube Config file.");
+            throw new KubeConfigUserNotFound(sprintf('The user %s does not exist in the provided Kube Config file.', $user));
         }
 
         $userName = $userConfig['name'];
@@ -239,12 +230,6 @@ trait LoadsFromKubeConfig
      * Create a file in the temporary directory for base-encoded data
      * coming from the KubeConfig file.
      *
-     * @param  string  $context
-     * @param  string  $userName
-     * @param  string  $url
-     * @param  string  $fileName
-     * @param  string  $contents
-     * @return string
      *
      * @throws \Exception
      */
@@ -254,11 +239,10 @@ trait LoadsFromKubeConfig
         string $url,
         string $fileName,
         string $contents
-    ) {
-        /** @var \RenokiCo\PhpK8s\KubernetesCluster $this */
+    ): string {
         $tempFolder = static::$tempFolder ?: sys_get_temp_dir();
 
-        $tempFilePath = $tempFolder.DIRECTORY_SEPARATOR.Str::slug("ctx-{$context}-{$userName}-{$url}")."-{$fileName}";
+        $tempFilePath = $tempFolder.DIRECTORY_SEPARATOR.Str::slug(sprintf('ctx-%s-%s-%s', $context, $userName, $url)).('-' . $fileName);
 
         if (file_exists($tempFilePath)) {
             return $tempFilePath;
@@ -267,11 +251,11 @@ trait LoadsFromKubeConfig
         $decodedContents = base64_decode($contents, true);
 
         if ($decodedContents === false) {
-            throw new KubeConfigBaseEncodedDataInvalid("Failed to decode base64-encoded data for: {$fileName}");
+            throw new KubeConfigBaseEncodedDataInvalid('Failed to decode base64-encoded data for: ' . $fileName);
         }
 
         if (file_put_contents($tempFilePath, $decodedContents) === false) {
-            throw new Exception("Failed to write content to temp file: {$tempFilePath}");
+            throw new Exception('Failed to write content to temp file: ' . $tempFilePath);
         }
 
         return $tempFilePath;
@@ -279,14 +263,9 @@ trait LoadsFromKubeConfig
 
     /**
      * Merge the two kubeconfig contents.
-     *
-     * @param  array  $kubeconfig1
-     * @param  array  $kubeconfig2
-     * @return array
      */
     protected static function mergeKubeconfigContents(array $kubeconfig1, array $kubeconfig2): array
     {
-        /** @var \RenokiCo\PhpK8s\KubernetesCluster $this */
         $kubeconfig1 += $kubeconfig2;
 
         foreach ($kubeconfig1 as $key => $value) {

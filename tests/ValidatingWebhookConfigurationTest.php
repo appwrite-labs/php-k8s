@@ -10,7 +10,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class ValidatingWebhookConfigurationTest extends TestCase
 {
-    public function test_validation_webhook_build()
+    public function test_validation_webhook_build(): void
     {
         $webhook = K8s::webhook()
             ->setName('v1.webhook.com')
@@ -26,20 +26,20 @@ class ValidatingWebhookConfigurationTest extends TestCase
             ->setSideEffects('None')
             ->setTimeoutSeconds(5);
 
-        $validatingWebhookConfiguration = $this->cluster->validatingWebhookConfiguration()
+        $k8sValidatingWebhookConfiguration = $this->cluster->validatingWebhookConfiguration()
             ->setName('ingress-validation-webhook')
             ->setLabels(['tier' => 'webhook'])
             ->setAnnotations(['webhook/annotation' => 'yes'])
             ->setWebhooks([$webhook]);
 
-        $this->assertEquals('admissionregistration.k8s.io/v1', $validatingWebhookConfiguration->getApiVersion());
-        $this->assertEquals('ingress-validation-webhook', $validatingWebhookConfiguration->getName());
-        $this->assertEquals(['tier' => 'webhook'], $validatingWebhookConfiguration->getLabels());
-        $this->assertEquals(['webhook/annotation' => 'yes'], $validatingWebhookConfiguration->getAnnotations());
-        $this->assertInstanceOf(K8sValidatingWebhookConfiguration::class, $validatingWebhookConfiguration);
+        $this->assertEquals('admissionregistration.k8s.io/v1', $k8sValidatingWebhookConfiguration->getApiVersion());
+        $this->assertEquals('ingress-validation-webhook', $k8sValidatingWebhookConfiguration->getName());
+        $this->assertEquals(['tier' => 'webhook'], $k8sValidatingWebhookConfiguration->getLabels());
+        $this->assertEquals(['webhook/annotation' => 'yes'], $k8sValidatingWebhookConfiguration->getAnnotations());
+        $this->assertInstanceOf(K8sValidatingWebhookConfiguration::class, $k8sValidatingWebhookConfiguration);
     }
 
-    public function test_validation_webhook_from_yaml()
+    public function test_validation_webhook_from_yaml(): void
     {
         $validatingWebhookConfiguration = $this->cluster->fromYamlFile(__DIR__.'/yaml/validatingwebhookconfiguration.yaml');
 
@@ -49,7 +49,7 @@ class ValidatingWebhookConfigurationTest extends TestCase
         $this->assertEquals(['webhook/annotation' => 'yes'], $validatingWebhookConfiguration->getAnnotations());
     }
 
-    public function test_validation_webhook_api_interaction()
+    public function test_validation_webhook_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -60,7 +60,7 @@ class ValidatingWebhookConfigurationTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $webhook = K8s::webhook()
             ->setName('v1.webhook.com')
@@ -112,67 +112,67 @@ class ValidatingWebhookConfigurationTest extends TestCase
         }
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $validatingWebhookConfigurations = $this->cluster->getAllValidatingWebhookConfiguration();
-        $this->assertInstanceOf(ResourcesList::class, $validatingWebhookConfigurations);
+        $allValidatingWebhookConfiguration = $this->cluster->getAllValidatingWebhookConfiguration();
+        $this->assertInstanceOf(ResourcesList::class, $allValidatingWebhookConfiguration);
 
-        foreach ($validatingWebhookConfigurations as $validatingWebhookConfiguration) {
+        foreach ($allValidatingWebhookConfiguration as $validatingWebhookConfiguration) {
             $this->assertInstanceOf(K8sValidatingWebhookConfiguration::class, $validatingWebhookConfiguration);
 
             $this->assertNotNull($validatingWebhookConfiguration->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $validatingWebhookConfiguration = $this->cluster->getValidatingWebhookConfigurationByName('ingress-validation-webhook');
+        $k8sValidatingWebhookConfiguration = $this->cluster->getValidatingWebhookConfigurationByName('ingress-validation-webhook');
 
-        $this->assertInstanceOf(K8sValidatingWebhookConfiguration::class, $validatingWebhookConfiguration);
+        $this->assertInstanceOf(K8sValidatingWebhookConfiguration::class, $k8sValidatingWebhookConfiguration);
 
-        $this->assertTrue($validatingWebhookConfiguration->isSynced());
+        $this->assertTrue($k8sValidatingWebhookConfiguration->isSynced());
 
-        $this->assertEquals('admissionregistration.k8s.io/v1', $validatingWebhookConfiguration->getApiVersion());
-        $this->assertEquals('ingress-validation-webhook', $validatingWebhookConfiguration->getName());
-        $this->assertEquals(['tier' => 'webhook'], $validatingWebhookConfiguration->getLabels());
-        $this->assertArrayHasKey('webhook/annotation', $validatingWebhookConfiguration->getAnnotations());
-        $this->assertEquals(1, count($validatingWebhookConfiguration->getWebhooks()));
+        $this->assertEquals('admissionregistration.k8s.io/v1', $k8sValidatingWebhookConfiguration->getApiVersion());
+        $this->assertEquals('ingress-validation-webhook', $k8sValidatingWebhookConfiguration->getName());
+        $this->assertEquals(['tier' => 'webhook'], $k8sValidatingWebhookConfiguration->getLabels());
+        $this->assertArrayHasKey('webhook/annotation', $k8sValidatingWebhookConfiguration->getAnnotations());
+        $this->assertEquals(1, count($k8sValidatingWebhookConfiguration->getWebhooks()));
 
-        foreach ($validatingWebhookConfiguration->getWebhooks() as $vw) {
+        foreach ($k8sValidatingWebhookConfiguration->getWebhooks() as $vw) {
             $this->assertInstanceOf(Webhook::class, $vw);
         }
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $validatingWebhookConfiguration = $this->cluster->getValidatingWebhookConfigurationByName('ingress-validation-webhook');
+        $k8sValidatingWebhookConfiguration = $this->cluster->getValidatingWebhookConfigurationByName('ingress-validation-webhook');
 
-        $this->assertTrue($validatingWebhookConfiguration->isSynced());
+        $this->assertTrue($k8sValidatingWebhookConfiguration->isSynced());
 
-        $validatingWebhookConfiguration->setAnnotations([]);
+        $k8sValidatingWebhookConfiguration->setAnnotations([]);
 
-        $validatingWebhookConfiguration->createOrUpdate();
+        $k8sValidatingWebhookConfiguration->createOrUpdate();
 
-        $this->assertTrue($validatingWebhookConfiguration->isSynced());
+        $this->assertTrue($k8sValidatingWebhookConfiguration->isSynced());
 
-        $this->assertEquals('admissionregistration.k8s.io/v1', $validatingWebhookConfiguration->getApiVersion());
-        $this->assertEquals('ingress-validation-webhook', $validatingWebhookConfiguration->getName());
-        $this->assertEquals(['tier' => 'webhook'], $validatingWebhookConfiguration->getLabels());
-        $this->assertEquals([], $validatingWebhookConfiguration->getAnnotations());
+        $this->assertEquals('admissionregistration.k8s.io/v1', $k8sValidatingWebhookConfiguration->getApiVersion());
+        $this->assertEquals('ingress-validation-webhook', $k8sValidatingWebhookConfiguration->getName());
+        $this->assertEquals(['tier' => 'webhook'], $k8sValidatingWebhookConfiguration->getLabels());
+        $this->assertEquals([], $k8sValidatingWebhookConfiguration->getAnnotations());
 
-        foreach ($validatingWebhookConfiguration->getWebhooks() as $vw) {
+        foreach ($k8sValidatingWebhookConfiguration->getWebhooks() as $vw) {
             $this->assertInstanceOf(Webhook::class, $vw);
         }
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $validatingWebhookConfiguration = $this->cluster->getValidatingWebhookConfigurationByName('ingress-validation-webhook');
+        $k8sValidatingWebhookConfiguration = $this->cluster->getValidatingWebhookConfigurationByName('ingress-validation-webhook');
 
-        $this->assertTrue($validatingWebhookConfiguration->delete());
+        $this->assertTrue($k8sValidatingWebhookConfiguration->delete());
 
-        while ($validatingWebhookConfiguration->exists()) {
-            dump("Awaiting for validation webhook configuration {$validatingWebhookConfiguration->getName()} to be deleted...");
+        while ($k8sValidatingWebhookConfiguration->exists()) {
+            dump(sprintf('Awaiting for validation webhook configuration %s to be deleted...', $k8sValidatingWebhookConfiguration->getName()));
             sleep(1);
         }
 
@@ -181,7 +181,7 @@ class ValidatingWebhookConfigurationTest extends TestCase
         $this->cluster->getValidatingWebhookConfigurationByName('ingress-validation-webhook');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->validatingWebhookConfiguration()->watchAll(function ($type, $validatingWebhookConfiguration) {
             if ($validatingWebhookConfiguration->getName() === 'ingress-validation-webhook') {
@@ -192,11 +192,9 @@ class ValidatingWebhookConfigurationTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->validatingWebhookConfiguration()->watchByName('ingress-validation-webhook', function ($type, $validatingWebhookConfiguration) {
-            return $validatingWebhookConfiguration->getName() === 'ingress-validation-webhook';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->validatingWebhookConfiguration()->watchByName('ingress-validation-webhook', fn($type, $validatingWebhookConfiguration): bool => $validatingWebhookConfiguration->getName() === 'ingress-validation-webhook', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

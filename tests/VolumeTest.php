@@ -7,7 +7,7 @@ use stdClass;
 
 class VolumeTest extends TestCase
 {
-    public function test_volume_empty_directory()
+    public function test_volume_empty_directory(): void
     {
         $volume = K8s::volume()->emptyDirectory('some-volume');
 
@@ -19,7 +19,7 @@ class VolumeTest extends TestCase
             ->addMountedVolumes([$mountedVolume])
             ->setMountedVolumes([$mountedVolume]);
 
-        $pod = K8s::pod()
+        $k8sPod = K8s::pod()
             ->setName('mysql')
             ->setContainers([$mysql])
             ->addVolumes([$volume])
@@ -27,7 +27,7 @@ class VolumeTest extends TestCase
 
         $this->assertEquals([
             'name' => 'some-volume',
-            'emptyDir' => (object) new stdClass,
+            'emptyDir' => new stdClass,
         ], $volume->toArray());
 
         $this->assertEquals([
@@ -35,20 +35,20 @@ class VolumeTest extends TestCase
             'mountPath' => '/some-path',
         ], $mountedVolume->toArray());
 
-        $this->assertEquals($pod->getVolumes()[0]->toArray(), $volume->toArray());
+        $this->assertEquals($k8sPod->getVolumes()[0]->toArray(), $volume->toArray());
         $this->assertEquals($mysql->getMountedVolumes()[0]->toArray(), $mountedVolume->toArray());
     }
 
-    public function test_volume_config_map()
+    public function test_volume_config_map(): void
     {
-        $cm = K8s::configMap()
+        $k8sConfigMap = K8s::configMap()
             ->setName('some-config-map')
             ->setData([
                 'some-key' => 'some-content',
                 'some-key2' => 'some-content-again',
             ]);
 
-        $volume = K8s::volume()->fromConfigMap($cm);
+        $volume = K8s::volume()->fromConfigMap($k8sConfigMap);
 
         $mountedVolume = $volume->mountTo('/some-path', 'some-key');
 
@@ -57,14 +57,14 @@ class VolumeTest extends TestCase
             ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
             ->addMountedVolumes([$mountedVolume]);
 
-        $pod = K8s::pod()
+        $k8sPod = K8s::pod()
             ->setName('mysql')
             ->setContainers([$mysql])
             ->addVolumes([$volume]);
 
         $this->assertEquals([
             'name' => 'some-config-map-volume',
-            'configMap' => ['name' => $cm->getName()],
+            'configMap' => ['name' => $k8sConfigMap->getName()],
         ], $volume->toArray());
 
         $this->assertEquals([
@@ -73,20 +73,20 @@ class VolumeTest extends TestCase
             'subPath' => 'some-key',
         ], $mountedVolume->toArray());
 
-        $this->assertEquals($pod->getVolumes()[0]->toArray(), $volume->toArray());
+        $this->assertEquals($k8sPod->getVolumes()[0]->toArray(), $volume->toArray());
         $this->assertEquals($mysql->getMountedVolumes()[0]->toArray(), $mountedVolume->toArray());
     }
 
-    public function test_volume_secret()
+    public function test_volume_secret(): void
     {
-        $secret = K8s::secret()
+        $k8sSecret = K8s::secret()
             ->setName('some-secret')
             ->setData([
                 'some-key' => 'some-content',
                 'some-key2' => 'some-content-again',
             ]);
 
-        $volume = K8s::volume()->fromSecret($secret);
+        $volume = K8s::volume()->fromSecret($k8sSecret);
 
         $mountedVolume = $volume->mountTo('/some-path', 'some-key');
 
@@ -95,14 +95,14 @@ class VolumeTest extends TestCase
             ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
             ->addMountedVolumes([$mountedVolume]);
 
-        $pod = K8s::pod()
+        $k8sPod = K8s::pod()
             ->setName('mysql')
             ->setContainers([$mysql])
             ->addVolumes([$volume]);
 
         $this->assertEquals([
             'name' => 'some-secret-secret-volume',
-            'secret' => ['secretName' => $secret->getName()],
+            'secret' => ['secretName' => $k8sSecret->getName()],
         ], $volume->toArray());
 
         $this->assertEquals([
@@ -111,11 +111,11 @@ class VolumeTest extends TestCase
             'subPath' => 'some-key',
         ], $mountedVolume->toArray());
 
-        $this->assertEquals($pod->getVolumes()[0]->toArray(), $volume->toArray());
+        $this->assertEquals($k8sPod->getVolumes()[0]->toArray(), $volume->toArray());
         $this->assertEquals($mysql->getMountedVolumes()[0]->toArray(), $mountedVolume->toArray());
     }
 
-    public function test_volume_gce_pd()
+    public function test_volume_gce_pd(): void
     {
         $volume = K8s::volume()->gcePersistentDisk('some-disk', 'ext3');
 
@@ -126,7 +126,7 @@ class VolumeTest extends TestCase
             ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
             ->addMountedVolumes([$mountedVolume]);
 
-        $pod = K8s::pod()
+        $k8sPod = K8s::pod()
             ->setName('mysql')
             ->setContainers([$mysql])
             ->addVolumes([$volume]);
@@ -144,11 +144,11 @@ class VolumeTest extends TestCase
             'mountPath' => '/some-path',
         ], $mountedVolume->toArray());
 
-        $this->assertEquals($pod->getVolumes()[0]->toArray(), $volume->toArray());
+        $this->assertEquals($k8sPod->getVolumes()[0]->toArray(), $volume->toArray());
         $this->assertEquals($mysql->getMountedVolumes()[0]->toArray(), $mountedVolume->toArray());
     }
 
-    public function test_volume_aws_ebs()
+    public function test_volume_aws_ebs(): void
     {
         $volume = K8s::volume()->awsEbs('vol-1234', 'ext3');
 
@@ -159,7 +159,7 @@ class VolumeTest extends TestCase
             ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
             ->addMountedVolumes([$mountedVolume]);
 
-        $pod = K8s::pod()
+        $k8sPod = K8s::pod()
             ->setName('mysql')
             ->setContainers([$mysql])
             ->addVolumes([$volume]);
@@ -177,7 +177,7 @@ class VolumeTest extends TestCase
             'mountPath' => '/some-path',
         ], $mountedVolume->toArray());
 
-        $this->assertEquals($pod->getVolumes()[0]->toArray(), $volume->toArray());
+        $this->assertEquals($k8sPod->getVolumes()[0]->toArray(), $volume->toArray());
         $this->assertEquals($mysql->getMountedVolumes()[0]->toArray(), $mountedVolume->toArray());
     }
 }

@@ -7,7 +7,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class NodeTest extends TestCase
 {
-    public function test_node_api_interaction()
+    public function test_node_api_interaction(): void
     {
         $this->runGetAllTests();
         $this->runGetTests();
@@ -15,37 +15,37 @@ class NodeTest extends TestCase
         $this->runWatchTests();
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $nodes = $this->cluster->getAllNodes();
+        $allNodes = $this->cluster->getAllNodes();
 
-        $this->assertInstanceOf(ResourcesList::class, $nodes);
+        $this->assertInstanceOf(ResourcesList::class, $allNodes);
 
-        foreach ($nodes as $node) {
-            $this->assertInstanceOf(K8sNode::class, $node);
+        foreach ($allNodes as $allNode) {
+            $this->assertInstanceOf(K8sNode::class, $allNode);
 
-            $this->assertNotNull($node->getName());
+            $this->assertNotNull($allNode->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
         $nodeName = $this->cluster->getAllNodes()->first()->getName();
 
-        $node = $this->cluster->getNodeByName($nodeName);
+        $k8sNode = $this->cluster->getNodeByName($nodeName);
 
-        $this->assertInstanceOf(K8sNode::class, $node);
+        $this->assertInstanceOf(K8sNode::class, $k8sNode);
 
-        $this->assertTrue($node->isSynced());
+        $this->assertTrue($k8sNode->isSynced());
 
         //$this->assertEquals('minikube', $node->getName());
-        $this->assertNotEquals([], $node->getInfo());
-        $this->assertTrue(is_array($node->getImages()));
-        $this->assertNotEquals([], $node->getCapacity());
-        $this->assertNotEquals([], $node->getAllocatableInfo());
+        $this->assertNotEquals([], $k8sNode->getInfo());
+        $this->assertTrue(is_array($k8sNode->getImages()));
+        $this->assertNotEquals([], $k8sNode->getCapacity());
+        $this->assertNotEquals([], $k8sNode->getAllocatableInfo());
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $nodeName = $this->cluster->getAllNodes()->first()->getName();
 
@@ -58,13 +58,11 @@ class NodeTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
         $nodeName = $this->cluster->getAllNodes()->first()->getName();
 
-        $watch = $this->cluster->node()->watchByName($nodeName, function ($type, $node) use ($nodeName) {
-            return $node->getName() === $nodeName;
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->node()->watchByName($nodeName, fn($type, $node): bool => $node->getName() === $nodeName, ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

@@ -9,7 +9,7 @@ trait HasKind
      *
      * @var null|string
      */
-    protected static $kind = null;
+    protected static $kind;
 
     /**
      * Get the resource kind.

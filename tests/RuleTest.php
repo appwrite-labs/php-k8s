@@ -7,7 +7,7 @@ use RenokiCo\PhpK8s\Kinds\K8sPod;
 
 class RuleTest extends TestCase
 {
-    public function test_build_rule()
+    public function test_build_rule(): void
     {
         $rule = K8s::rule()
             ->core()

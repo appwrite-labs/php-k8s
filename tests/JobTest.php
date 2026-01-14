@@ -10,44 +10,44 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class JobTest extends TestCase
 {
-    public function test_job_build()
+    public function test_job_build(): void
     {
         $pi = K8s::container()
             ->setName('pi')
             ->setImage('public.ecr.aws/docker/library/perl')
             ->setCommand(['perl',  '-Mbignum=bpi', '-wle', 'print bpi(200)']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('perl')
             ->setContainers([$pi])
             ->restartOnFailure()
             ->neverRestart();
 
-        $job = $this->cluster->job()
+        $k8sJob = $this->cluster->job()
             ->setName('pi')
             ->setLabels(['tier' => 'compute'])
             ->setAnnotations(['perl/annotation' => 'yes'])
             ->setTTL(3600)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
-        $this->assertEquals('batch/v1', $job->getApiVersion());
-        $this->assertEquals('pi', $job->getName());
-        $this->assertEquals(['tier' => 'compute'], $job->getLabels());
-        $this->assertEquals(['perl/annotation' => 'yes'], $job->getAnnotations());
-        $this->assertEquals($pod->getName(), $job->getTemplate()->getName());
-        $this->assertEquals('Never', $pod->getRestartPolicy());
+        $this->assertEquals('batch/v1', $k8sJob->getApiVersion());
+        $this->assertEquals('pi', $k8sJob->getName());
+        $this->assertEquals(['tier' => 'compute'], $k8sJob->getLabels());
+        $this->assertEquals(['perl/annotation' => 'yes'], $k8sJob->getAnnotations());
+        $this->assertEquals($k8sPod->getName(), $k8sJob->getTemplate()->getName());
+        $this->assertEquals('Never', $k8sPod->getRestartPolicy());
 
-        $this->assertInstanceOf(K8sPod::class, $job->getTemplate());
+        $this->assertInstanceOf(K8sPod::class, $k8sJob->getTemplate());
     }
 
-    public function test_job_from_yaml()
+    public function test_job_from_yaml(): void
     {
         $pi = K8s::container()
             ->setName('pi')
             ->setImage('public.ecr.aws/docker/library/perl')
             ->setCommand(['perl',  '-Mbignum=bpi', '-wle', 'print bpi(200)']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('perl')
             ->setContainers([$pi])
             ->restartOnFailure()
@@ -59,13 +59,13 @@ class JobTest extends TestCase
         $this->assertEquals('pi', $job->getName());
         $this->assertEquals(['tier' => 'compute'], $job->getLabels());
         $this->assertEquals(['perl/annotation' => 'yes'], $job->getAnnotations());
-        $this->assertEquals($pod->getName(), $job->getTemplate()->getName());
-        $this->assertEquals('Never', $pod->getRestartPolicy());
+        $this->assertEquals($k8sPod->getName(), $job->getTemplate()->getName());
+        $this->assertEquals('Never', $k8sPod->getRestartPolicy());
 
         $this->assertInstanceOf(K8sPod::class, $job->getTemplate());
     }
 
-    public function test_job_api_interaction()
+    public function test_job_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -76,14 +76,14 @@ class JobTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $pi = K8s::container()
             ->setName('pi')
             ->setImage('public.ecr.aws/docker/library/perl', '5.36')
             ->setCommand(['perl',  '-Mbignum=bpi', '-wle', 'print bpi(200)']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('perl')
             ->setLabels(['tier' => 'compute'])
             ->setContainers([$pi])
@@ -94,7 +94,7 @@ class JobTest extends TestCase
             ->setLabels(['tier' => 'compute'])
             ->setAnnotations(['perl/annotation' => 'yes'])
             ->setTTL(3600)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
         $this->assertFalse($job->isSynced());
         $this->assertFalse($job->exists());
@@ -112,23 +112,23 @@ class JobTest extends TestCase
 
         $annotations = $job->getAnnotations();
         foreach (['perl/annotation' => 'yes'] as $key => $value) {
-            $this->assertContains($key, array_keys($annotations), "Annotation $key missing");
+            $this->assertContains($key, array_keys($annotations), sprintf('Annotation %s missing', $key));
             $this->assertEquals($value, $annotations[$key]);
         }
 
-        $this->assertEquals($pod->getName(), $job->getTemplate()->getName());
+        $this->assertEquals($k8sPod->getName(), $job->getTemplate()->getName());
 
         $this->assertInstanceOf(K8sPod::class, $job->getTemplate());
 
         $job->refresh();
 
         while (! $job->hasCompleted()) {
-            dump("Waiting for pods of {$job->getName()} to finish executing...");
+            dump(sprintf('Waiting for pods of %s to finish executing...', $job->getName()));
             sleep(1);
             $job->refresh();
         }
 
-        K8sJob::selectPods(function ($job) {
+        K8sJob::selectPods(function ($job): array {
             $this->assertInstanceOf(K8sJob::class, $job);
 
             return ['tier' => 'compute'];
@@ -149,7 +149,7 @@ class JobTest extends TestCase
         $job->refresh();
 
         while (! $completionTime = $job->getCompletionTime()) {
-            dump("Waiting for the completion time report of {$job->getName()}...");
+            dump(sprintf('Waiting for the completion time report of %s...', $job->getName()));
             sleep(1);
             $job->refresh();
         }
@@ -162,67 +162,67 @@ class JobTest extends TestCase
         $this->assertTrue(is_array($job->getConditions()));
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $jobs = $this->cluster->getAllJobs();
+        $allJobs = $this->cluster->getAllJobs();
 
-        $this->assertInstanceOf(ResourcesList::class, $jobs);
+        $this->assertInstanceOf(ResourcesList::class, $allJobs);
 
-        foreach ($jobs as $job) {
-            $this->assertInstanceOf(K8sJob::class, $job);
+        foreach ($allJobs as $allJob) {
+            $this->assertInstanceOf(K8sJob::class, $allJob);
 
-            $this->assertNotNull($job->getName());
+            $this->assertNotNull($allJob->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $job = $this->cluster->getJobByName('pi');
+        $k8sJob = $this->cluster->getJobByName('pi');
 
-        $this->assertInstanceOf(K8sJob::class, $job);
+        $this->assertInstanceOf(K8sJob::class, $k8sJob);
 
-        $this->assertTrue($job->isSynced());
+        $this->assertTrue($k8sJob->isSynced());
 
-        $this->assertEquals('batch/v1', $job->getApiVersion());
-        $this->assertEquals('pi', $job->getName());
-        $this->assertEquals(['tier' => 'compute'], $job->getLabels());
+        $this->assertEquals('batch/v1', $k8sJob->getApiVersion());
+        $this->assertEquals('pi', $k8sJob->getName());
+        $this->assertEquals(['tier' => 'compute'], $k8sJob->getLabels());
 
-        $annotations = $job->getAnnotations();
+        $annotations = $k8sJob->getAnnotations();
         foreach (['perl/annotation' => 'yes'] as $key => $value) {
-            $this->assertContains($key, array_keys($annotations), "Annotation $key missing");
+            $this->assertContains($key, array_keys($annotations), sprintf('Annotation %s missing', $key));
             $this->assertEquals($value, $annotations[$key]);
         }
 
-        $this->assertInstanceOf(K8sPod::class, $job->getTemplate());
+        $this->assertInstanceOf(K8sPod::class, $k8sJob->getTemplate());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $job = $this->cluster->getJobByName('pi');
+        $k8sJob = $this->cluster->getJobByName('pi');
 
-        $this->assertTrue($job->isSynced());
+        $this->assertTrue($k8sJob->isSynced());
 
-        $job->setAnnotations([]);
+        $k8sJob->setAnnotations([]);
 
-        $job->createOrUpdate();
+        $k8sJob->createOrUpdate();
 
-        $this->assertTrue($job->isSynced());
+        $this->assertTrue($k8sJob->isSynced());
 
-        $this->assertEquals('batch/v1', $job->getApiVersion());
-        $this->assertEquals('pi', $job->getName());
-        $this->assertEquals(['tier' => 'compute'], $job->getLabels());
+        $this->assertEquals('batch/v1', $k8sJob->getApiVersion());
+        $this->assertEquals('pi', $k8sJob->getName());
+        $this->assertEquals(['tier' => 'compute'], $k8sJob->getLabels());
 
-        $this->assertInstanceOf(K8sPod::class, $job->getTemplate());
+        $this->assertInstanceOf(K8sPod::class, $k8sJob->getTemplate());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $job = $this->cluster->getJobByName('pi');
+        $k8sJob = $this->cluster->getJobByName('pi');
 
-        $this->assertTrue($job->delete());
+        $this->assertTrue($k8sJob->delete());
 
-        while ($job->exists()) {
-            dump("Awaiting for job {$job->getName()} to be deleted...");
+        while ($k8sJob->exists()) {
+            dump(sprintf('Awaiting for job %s to be deleted...', $k8sJob->getName()));
             sleep(1);
         }
 
@@ -231,7 +231,7 @@ class JobTest extends TestCase
         $this->cluster->getJobByName('pi');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->job()->watchAll(function ($type, $job) {
             if ($job->getName() === 'pi') {
@@ -242,11 +242,9 @@ class JobTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->job()->watchByName('pi', function ($type, $job) {
-            return $job->getName() === 'pi';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->job()->watchByName('pi', fn($type, $job): bool => $job->getName() === 'pi', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

@@ -6,7 +6,7 @@ use RenokiCo\PhpK8s\K8s;
 
 class ProbeTest extends TestCase
 {
-    public function test_command_probe()
+    public function test_command_probe(): void
     {
         $probe = K8s::probe()->command(['sh', 'test.sh'])
             ->setInitialDelaySeconds(10)
@@ -23,7 +23,7 @@ class ProbeTest extends TestCase
         $this->assertEquals(2, $probe->getSuccessThreshold());
     }
 
-    public function test_http_probe()
+    public function test_http_probe(): void
     {
         $probe = K8s::probe()->http('/health', 80, ['X-CSRF-TOKEN' => 'some-token'])
             ->setInitialDelaySeconds(10)
@@ -45,7 +45,7 @@ class ProbeTest extends TestCase
         $this->assertEquals(2, $probe->getSuccessThreshold());
     }
 
-    public function test_tcp_probe()
+    public function test_tcp_probe(): void
     {
         $probe = K8s::probe()->tcp(3306)
             ->setInitialDelaySeconds(10)

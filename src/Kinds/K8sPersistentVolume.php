@@ -32,8 +32,6 @@ class K8sPersistentVolume extends K8sResource implements InteractsWithK8sCluster
     /**
      * Set the PV source with parameters.
      *
-     * @param  string  $source
-     * @param  array  $parameters
      * @return $this
      */
     public function setSource(string $source, array $parameters = [])
@@ -44,8 +42,6 @@ class K8sPersistentVolume extends K8sResource implements InteractsWithK8sCluster
     /**
      * Set the capacity of the PV.
      *
-     * @param  int  $size
-     * @param  string  $measure
      * @return $this
      */
     public function setCapacity(int $size, string $measure = 'Gi')
@@ -60,13 +56,11 @@ class K8sPersistentVolume extends K8sResource implements InteractsWithK8sCluster
      */
     public function getCapacity()
     {
-        return $this->getSpec('capacity.storage', null);
+        return $this->getSpec('capacity.storage');
     }
 
     /**
      * Check if the PV is available to be used.
-     *
-     * @return bool
      */
     public function isAvailable(): bool
     {
@@ -75,8 +69,6 @@ class K8sPersistentVolume extends K8sResource implements InteractsWithK8sCluster
 
     /**
      * Check if the PV is bound.
-     *
-     * @return bool
      */
     public function isBound(): bool
     {

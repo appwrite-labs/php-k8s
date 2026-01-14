@@ -43,9 +43,9 @@ class IngressTest extends TestCase
         'secretName' => 'very-secret-name',
     ]];
 
-    public function test_ingress_build()
+    public function test_ingress_build(): void
     {
-        $ing = $this->cluster->ingress()
+        $k8sIngress = $this->cluster->ingress()
             ->setName('nginx')
             ->setLabels(['tier' => 'backend'])
             ->setAnnotations(['nginx/ann' => 'yes'])
@@ -53,15 +53,15 @@ class IngressTest extends TestCase
             ->addRules(self::$rules)
             ->setRules(self::$rules);
 
-        $this->assertEquals('networking.k8s.io/v1', $ing->getApiVersion());
-        $this->assertEquals('nginx', $ing->getName());
-        $this->assertEquals(['tier' => 'backend'], $ing->getLabels());
-        $this->assertEquals(['nginx/ann' => 'yes'], $ing->getAnnotations());
-        $this->assertEquals(self::$tls, $ing->getTls());
-        $this->assertEquals(self::$rules, $ing->getRules());
+        $this->assertEquals('networking.k8s.io/v1', $k8sIngress->getApiVersion());
+        $this->assertEquals('nginx', $k8sIngress->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sIngress->getLabels());
+        $this->assertEquals(['nginx/ann' => 'yes'], $k8sIngress->getAnnotations());
+        $this->assertEquals(self::$tls, $k8sIngress->getTls());
+        $this->assertEquals(self::$rules, $k8sIngress->getRules());
     }
 
-    public function test_ingress_from_yaml_post()
+    public function test_ingress_from_yaml_post(): void
     {
         $ing = $this->cluster->fromYamlFile(__DIR__.'/yaml/ingress.yaml');
 
@@ -72,7 +72,7 @@ class IngressTest extends TestCase
         $this->assertEquals(self::$rules, $ing->getRules());
     }
 
-    public function test_ingress_api_interaction()
+    public function test_ingress_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -84,7 +84,7 @@ class IngressTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $ing = $this->cluster->ingress()
             ->setName('nginx')
@@ -111,79 +111,79 @@ class IngressTest extends TestCase
         $this->assertEquals(self::$rules, $ing->getRules());
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $ingresss = $this->cluster->getAllIngresses();
+        $allIngresses = $this->cluster->getAllIngresses();
 
-        $this->assertInstanceOf(ResourcesList::class, $ingresss);
+        $this->assertInstanceOf(ResourcesList::class, $allIngresses);
 
-        foreach ($ingresss as $ing) {
-            $this->assertInstanceOf(K8sIngress::class, $ing);
+        foreach ($allIngresses as $allIngress) {
+            $this->assertInstanceOf(K8sIngress::class, $allIngress);
 
-            $this->assertNotNull($ing->getName());
+            $this->assertNotNull($allIngress->getName());
         }
     }
 
-    public function runGetAllFromAllNamespacesTests()
+    public function runGetAllFromAllNamespacesTests(): void
     {
-        $ingresss = $this->cluster->getAllIngressesFromAllNamespaces();
+        $allIngressesFromAllNamespaces = $this->cluster->getAllIngressesFromAllNamespaces();
 
-        $this->assertInstanceOf(ResourcesList::class, $ingresss);
+        $this->assertInstanceOf(ResourcesList::class, $allIngressesFromAllNamespaces);
 
-        foreach ($ingresss as $ing) {
-            $this->assertInstanceOf(K8sIngress::class, $ing);
+        foreach ($allIngressesFromAllNamespaces as $allIngressFromAllNamespace) {
+            $this->assertInstanceOf(K8sIngress::class, $allIngressFromAllNamespace);
 
-            $this->assertNotNull($ing->getName());
+            $this->assertNotNull($allIngressFromAllNamespace->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $ing = $this->cluster->getIngressByName('nginx');
+        $k8sIngress = $this->cluster->getIngressByName('nginx');
 
-        $this->assertInstanceOf(K8sIngress::class, $ing);
+        $this->assertInstanceOf(K8sIngress::class, $k8sIngress);
 
-        $this->assertTrue($ing->isSynced());
+        $this->assertTrue($k8sIngress->isSynced());
 
-        $this->assertEquals('networking.k8s.io/v1', $ing->getApiVersion());
-        $this->assertEquals('nginx', $ing->getName());
-        $this->assertEquals(['tier' => 'backend'], $ing->getLabels());
-        $this->assertEquals(['nginx/ann' => 'yes'], $ing->getAnnotations());
-        $this->assertEquals(self::$rules, $ing->getRules());
+        $this->assertEquals('networking.k8s.io/v1', $k8sIngress->getApiVersion());
+        $this->assertEquals('nginx', $k8sIngress->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sIngress->getLabels());
+        $this->assertEquals(['nginx/ann' => 'yes'], $k8sIngress->getAnnotations());
+        $this->assertEquals(self::$rules, $k8sIngress->getRules());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $ing = $this->cluster->getIngressByName('nginx');
+        $k8sIngress = $this->cluster->getIngressByName('nginx');
 
-        $this->assertTrue($ing->isSynced());
+        $this->assertTrue($k8sIngress->isSynced());
 
-        $ing->setAnnotations([]);
+        $k8sIngress->setAnnotations([]);
 
-        $ing->createOrUpdate();
+        $k8sIngress->createOrUpdate();
 
-        $this->assertTrue($ing->isSynced());
+        $this->assertTrue($k8sIngress->isSynced());
 
-        $this->assertEquals('networking.k8s.io/v1', $ing->getApiVersion());
-        $this->assertEquals('nginx', $ing->getName());
-        $this->assertEquals(['tier' => 'backend'], $ing->getLabels());
-        $this->assertEquals([], $ing->getAnnotations());
-        $this->assertEquals(self::$tls, $ing->getTls());
-        $this->assertEquals(self::$rules, $ing->getRules());
+        $this->assertEquals('networking.k8s.io/v1', $k8sIngress->getApiVersion());
+        $this->assertEquals('nginx', $k8sIngress->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sIngress->getLabels());
+        $this->assertEquals([], $k8sIngress->getAnnotations());
+        $this->assertEquals(self::$tls, $k8sIngress->getTls());
+        $this->assertEquals(self::$rules, $k8sIngress->getRules());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $ingress = $this->cluster->getIngressByName('nginx');
+        $k8sIngress = $this->cluster->getIngressByName('nginx');
 
-        $this->assertTrue($ingress->delete());
+        $this->assertTrue($k8sIngress->delete());
 
         $this->expectException(KubernetesAPIException::class);
 
         $this->cluster->getIngressByName('nginx');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->ingress()->watchAll(function ($type, $ingress) {
             if ($ingress->getName() === 'nginx') {
@@ -194,11 +194,9 @@ class IngressTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->ingress()->watchByName('nginx', function ($type, $ingress) {
-            return $ingress->getName() === 'nginx';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->ingress()->watchByName('nginx', fn($type, $ingress): bool => $ingress->getName() === 'nginx', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

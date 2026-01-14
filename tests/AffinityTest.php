@@ -6,7 +6,7 @@ use RenokiCo\PhpK8s\K8s;
 
 class AffinityTest extends TestCase
 {
-    public function test_affinity_preferredDuringSchedulingIgnoredDuringExecution_with_preference()
+    public function test_affinity_preferredDuringSchedulingIgnoredDuringExecution_with_preference(): void
     {
         $affinity = K8s::affinity()->addPreference(
             [K8s::expression()->in('azname', ['us-east-1a'])],
@@ -14,7 +14,7 @@ class AffinityTest extends TestCase
             100
         );
 
-        $pod = K8s::pod()->setPodAffinity($affinity);
+        $k8sPod = K8s::pod()->setPodAffinity($affinity);
 
         $this->assertEquals([
             'preferredDuringSchedulingIgnoredDuringExecution' => [
@@ -30,10 +30,10 @@ class AffinityTest extends TestCase
                     ],
                 ],
             ],
-        ], $pod->getPodAffinity()->toArray());
+        ], $k8sPod->getPodAffinity()->toArray());
     }
 
-    public function test_affinity_preferredDuringSchedulingIgnoredDuringExecution_with_node_selector()
+    public function test_affinity_preferredDuringSchedulingIgnoredDuringExecution_with_node_selector(): void
     {
         $affinity = K8s::affinity()->addNodeSelectorPreference(
             [K8s::expression()->in('azname', ['us-east-1a'])],
@@ -41,7 +41,7 @@ class AffinityTest extends TestCase
             100
         );
 
-        $pod = K8s::pod()->setNodeAffinity($affinity);
+        $k8sPod = K8s::pod()->setNodeAffinity($affinity);
 
         $this->assertEquals([
             'preferredDuringSchedulingIgnoredDuringExecution' => [
@@ -59,17 +59,17 @@ class AffinityTest extends TestCase
                     ],
                 ],
             ],
-        ], $pod->getNodeAffinity()->toArray());
+        ], $k8sPod->getNodeAffinity()->toArray());
     }
 
-    public function test_affinity_requiredDuringSchedulingIgnoredDuringExecution_with_node_selector()
+    public function test_affinity_requiredDuringSchedulingIgnoredDuringExecution_with_node_selector(): void
     {
         $affinity = K8s::affinity()->addNodeRequirement(
             [K8s::expression()->in('azname', ['us-east-1a'])],
             [K8s::expression()->in('tier', ['backend'])]
         );
 
-        $pod = K8s::pod()->setNodeAffinity($affinity);
+        $k8sPod = K8s::pod()->setNodeAffinity($affinity);
 
         $this->assertEquals([
             'requiredDuringSchedulingIgnoredDuringExecution' => [
@@ -84,10 +84,10 @@ class AffinityTest extends TestCase
                     ],
                 ],
             ],
-        ], $pod->getNodeAffinity()->toArray());
+        ], $k8sPod->getNodeAffinity()->toArray());
     }
 
-    public function test_affinity_requiredDuringSchedulingIgnoredDuringExecution_with_label_selector()
+    public function test_affinity_requiredDuringSchedulingIgnoredDuringExecution_with_label_selector(): void
     {
         $affinity = K8s::affinity()->addLabelSelectorRequirement(
             [K8s::expression()->in('azname', ['us-east-1a'])],
@@ -95,7 +95,7 @@ class AffinityTest extends TestCase
             'aws.amazonaws.com/some-topology'
         );
 
-        $pod = K8s::pod()->setNodeAffinity($affinity);
+        $k8sPod = K8s::pod()->setNodeAffinity($affinity);
 
         $this->assertEquals([
             'requiredDuringSchedulingIgnoredDuringExecution' => [
@@ -111,6 +111,6 @@ class AffinityTest extends TestCase
                     'topologyKey' => 'aws.amazonaws.com/some-topology',
                 ],
             ],
-        ], $pod->getNodeAffinity()->toArray());
+        ], $k8sPod->getNodeAffinity()->toArray());
     }
 }

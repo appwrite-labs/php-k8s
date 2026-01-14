@@ -12,28 +12,22 @@ trait MakesHttpCalls
 {
     /**
      * Get the callable URL for a specific path.
-     *
-     * @param  string  $path
-     * @param  array  $query
-     * @return string
      */
-    public function getCallableUrl(string $path, array $query = ['pretty' => 1])
+    public function getCallableUrl(string $path, array $query = ['pretty' => 1]): string
     {
         /**
          * Replace any name[<number>]=value occurences with name=value
          * to support argv input.
          */
-        $query = urldecode(preg_replace('/%5B(?:[0-9]|[1-9][0-9]+)%5D=/', '=', http_build_query($query)));
+        $query = urldecode((string) preg_replace('/%5B(?:\d|[1-9]\d+)%5D=/', '=', http_build_query($query)));
 
-        return "{$this->url}{$path}?{$query}";
+        return sprintf('%s%s?%s', $this->url, $path, $query);
     }
 
     /**
      * Get the Guzzle Client to perform requests on.
-     *
-     * @return \GuzzleHttp\Client
      */
-    public function getClient()
+    public function getClient(): \GuzzleHttp\Client
     {
         $options = [
             RequestOptions::HEADERS => [
@@ -48,7 +42,7 @@ trait MakesHttpCalls
         }
 
         if ($this->token) {
-            $options[RequestOptions::HEADERS]['authorization'] = "Bearer {$this->token}";
+            $options[RequestOptions::HEADERS]['authorization'] = 'Bearer ' . $this->token;
         }
 
         if ($this->auth) {
@@ -69,10 +63,6 @@ trait MakesHttpCalls
     /**
      * Make a HTTP call to a given path with a method and payload.
      *
-     * @param  string  $method
-     * @param  string  $path
-     * @param  string  $payload
-     * @param  array  $query
      * @return \Psr\Http\Message\ResponseInterface
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -83,11 +73,11 @@ trait MakesHttpCalls
             $response = $this->getClient()->request($method, $this->getCallableUrl($path, $query), [
                 RequestOptions::BODY => $payload,
             ]);
-        } catch (ClientException $e) {
-            $errorPayload = json_decode((string) $e->getResponse()->getBody(), true);
+        } catch (ClientException $clientException) {
+            $errorPayload = json_decode((string) $clientException->getResponse()->getBody(), true);
 
             throw new KubernetesAPIException(
-                $e->getMessage(),
+                $clientException->getMessage(),
                 $errorPayload['code'] ?? 0,
                 $errorPayload
             );
@@ -99,10 +89,6 @@ trait MakesHttpCalls
     /**
      * Call the API with the specified method and path.
      *
-     * @param  string  $operation
-     * @param  string  $path
-     * @param  string  $payload
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -135,7 +121,7 @@ trait MakesHttpCalls
             $results = [];
 
             foreach ($json['items'] as $item) {
-                $results[] = (new $resourceClass($this, $item))->synced();
+                $results[] = new $resourceClass($this, $item)->synced();
             }
 
             return new ResourcesList($results, $json['metadata']);
@@ -145,6 +131,6 @@ trait MakesHttpCalls
         // is the same as the current class, so pass it
         // for the payload.
 
-        return (new $resourceClass($this, $json))->synced();
+        return new $resourceClass($this, $json)->synced();
     }
 }

@@ -29,18 +29,15 @@ class K8sService extends K8sResource implements Dnsable, InteractsWithK8sCluster
 
     /**
      * Get the DNS name within the cluster.
-     *
-     * @return string|null
      */
-    public function getClusterDns()
+    public function getClusterDns(): string
     {
-        return "{$this->getName()}.{$this->getNamespace()}.svc.cluster.local";
+        return sprintf('%s.%s.svc.cluster.local', $this->getName(), $this->getNamespace());
     }
 
     /**
      * Set the ports spec attribute.
      *
-     * @param  array  $ports
      * @return $this
      */
     public function setPorts(array $ports = [])
@@ -51,7 +48,6 @@ class K8sService extends K8sResource implements Dnsable, InteractsWithK8sCluster
     /**
      * Add a new port.
      *
-     * @param  array  $port
      * @return $this
      */
     public function addPort(array $port)
@@ -62,10 +58,9 @@ class K8sService extends K8sResource implements Dnsable, InteractsWithK8sCluster
     /**
      * Batch-add multiple ports.
      *
-     * @param  array  $ports
      * @return $this
      */
-    public function addPorts(array $ports)
+    public function addPorts(array $ports): static
     {
         foreach ($ports as $port) {
             $this->addPort($port);
@@ -76,8 +71,6 @@ class K8sService extends K8sResource implements Dnsable, InteractsWithK8sCluster
 
     /**
      * Get the binded ports.
-     *
-     * @return array
      */
     public function getPorts(): array
     {

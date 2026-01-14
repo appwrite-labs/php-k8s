@@ -39,10 +39,9 @@ class K8sServiceAccount extends K8sResource implements InteractsWithK8sCluster, 
     /**
      * Batch-add multiple secrets.
      *
-     * @param  array  $secrets
      * @return $this
      */
-    public function addSecrets(array $secrets)
+    public function addSecrets(array $secrets): static
     {
         foreach ($secrets as $secret) {
             $this->addSecret($secret);
@@ -54,7 +53,6 @@ class K8sServiceAccount extends K8sResource implements InteractsWithK8sCluster, 
     /**
      * Set the secrets to the instance.
      *
-     * @param  array  $secrets
      * @return $this
      */
     public function setSecrets(array $secrets)
@@ -71,7 +69,6 @@ class K8sServiceAccount extends K8sResource implements InteractsWithK8sCluster, 
     /**
      * Add a new pulled secret by the image.
      *
-     * @param  string  $name
      * @return $this
      */
     public function addPulledSecret(string $name)
@@ -82,10 +79,9 @@ class K8sServiceAccount extends K8sResource implements InteractsWithK8sCluster, 
     /**
      * Batch-add new pulled secrets by the image.
      *
-     * @param  array  $names
      * @return $this
      */
-    public function addPulledSecrets(array $names)
+    public function addPulledSecrets(array $names): static
     {
         foreach ($names as $name) {
             $this->addPulledSecret($name);

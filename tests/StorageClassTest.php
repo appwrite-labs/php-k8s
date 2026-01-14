@@ -8,7 +8,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class StorageClassTest extends TestCase
 {
-    public function test_storage_class_build()
+    public function test_storage_class_build(): void
     {
         $sc = $this->cluster->storageClass()
             ->setName('io1')
@@ -25,7 +25,7 @@ class StorageClassTest extends TestCase
         $this->assertEquals(['debug'], $sc->getMountOptions());
     }
 
-    public function test_storage_class_from_yaml()
+    public function test_storage_class_from_yaml(): void
     {
         $sc = $this->cluster->fromYamlFile(__DIR__.'/yaml/storageclass.yaml');
 
@@ -37,7 +37,7 @@ class StorageClassTest extends TestCase
         $this->assertEquals(['debug'], $sc->getMountOptions());
     }
 
-    public function test_storage_class_api_interaction()
+    public function test_storage_class_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -48,7 +48,7 @@ class StorageClassTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $sc = $this->cluster->storageClass()
             ->setName('io1')
@@ -75,67 +75,67 @@ class StorageClassTest extends TestCase
         $this->assertEquals(['debug'], $sc->getMountOptions());
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $storageClasses = $this->cluster->getAllStorageClasses();
+        $allStorageClasses = $this->cluster->getAllStorageClasses();
 
-        $this->assertInstanceOf(ResourcesList::class, $storageClasses);
+        $this->assertInstanceOf(ResourcesList::class, $allStorageClasses);
 
-        foreach ($storageClasses as $sc) {
-            $this->assertInstanceOf(K8sStorageClass::class, $sc);
+        foreach ($allStorageClasses as $allStorageClass) {
+            $this->assertInstanceOf(K8sStorageClass::class, $allStorageClass);
 
-            $this->assertNotNull($sc->getName());
+            $this->assertNotNull($allStorageClass->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $sc = $this->cluster->getStorageClassByName('io1');
+        $k8sStorageClass = $this->cluster->getStorageClassByName('io1');
 
-        $this->assertInstanceOf(K8sStorageClass::class, $sc);
+        $this->assertInstanceOf(K8sStorageClass::class, $k8sStorageClass);
 
-        $this->assertTrue($sc->isSynced());
+        $this->assertTrue($k8sStorageClass->isSynced());
 
-        $this->assertEquals('storage.k8s.io/v1', $sc->getApiVersion());
-        $this->assertEquals('io1', $sc->getName());
-        $this->assertEquals(['tier' => 'backend'], $sc->getLabels());
-        $this->assertEquals('csi.aws.amazon.com', $sc->getProvisioner());
-        $this->assertEquals(['type' => 'io1', 'iopsPerGB' => 10], $sc->getParameters());
-        $this->assertEquals(['debug'], $sc->getMountOptions());
+        $this->assertEquals('storage.k8s.io/v1', $k8sStorageClass->getApiVersion());
+        $this->assertEquals('io1', $k8sStorageClass->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sStorageClass->getLabels());
+        $this->assertEquals('csi.aws.amazon.com', $k8sStorageClass->getProvisioner());
+        $this->assertEquals(['type' => 'io1', 'iopsPerGB' => 10], $k8sStorageClass->getParameters());
+        $this->assertEquals(['debug'], $k8sStorageClass->getMountOptions());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $sc = $this->cluster->getStorageClassByName('io1');
+        $k8sStorageClass = $this->cluster->getStorageClassByName('io1');
 
-        $this->assertTrue($sc->isSynced());
+        $this->assertTrue($k8sStorageClass->isSynced());
 
-        $sc->setAttribute('mountOptions', ['debug']);
+        $k8sStorageClass->setAttribute('mountOptions', ['debug']);
 
-        $sc->createOrUpdate();
+        $k8sStorageClass->createOrUpdate();
 
-        $this->assertTrue($sc->isSynced());
+        $this->assertTrue($k8sStorageClass->isSynced());
 
-        $this->assertEquals('storage.k8s.io/v1', $sc->getApiVersion());
-        $this->assertEquals('io1', $sc->getName());
-        $this->assertEquals(['tier' => 'backend'], $sc->getLabels());
-        $this->assertEquals(['debug'], $sc->getAttribute('mountOptions'));
-        $this->assertEquals(['type' => 'io1', 'iopsPerGB' => '10'], $sc->getParameters());
-        $this->assertEquals(['debug'], $sc->getMountOptions());
+        $this->assertEquals('storage.k8s.io/v1', $k8sStorageClass->getApiVersion());
+        $this->assertEquals('io1', $k8sStorageClass->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sStorageClass->getLabels());
+        $this->assertEquals(['debug'], $k8sStorageClass->getAttribute('mountOptions'));
+        $this->assertEquals(['type' => 'io1', 'iopsPerGB' => '10'], $k8sStorageClass->getParameters());
+        $this->assertEquals(['debug'], $k8sStorageClass->getMountOptions());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $sc = $this->cluster->getStorageClassByName('io1');
+        $k8sStorageClass = $this->cluster->getStorageClassByName('io1');
 
-        $this->assertTrue($sc->delete());
+        $this->assertTrue($k8sStorageClass->delete());
 
         $this->expectException(KubernetesAPIException::class);
 
         $this->cluster->getStorageClassByName('io1');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->storageClass()->watchAll(function ($type, $sc) {
             if ($sc->getName() === 'io1') {
@@ -146,11 +146,9 @@ class StorageClassTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->storageClass()->watchByName('io1', function ($type, $sc) {
-            return $sc->getName() === 'io1';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->storageClass()->watchByName('io1', fn($type, $sc): bool => $sc->getName() === 'io1', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

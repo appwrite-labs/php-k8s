@@ -55,7 +55,6 @@ class K8sCronJob extends K8sResource implements InteractsWithK8sCluster, Watchab
     /**
      * Get the template job.
      *
-     * @param  bool  $asInstance
      * @return array|K8sJob
      */
     public function getJobTemplate(bool $asInstance = true)
@@ -63,7 +62,7 @@ class K8sCronJob extends K8sResource implements InteractsWithK8sCluster, Watchab
         $template = $this->getSpec('jobTemplate', []);
 
         if ($asInstance) {
-            $template = new K8sJob($this->cluster, $template);
+            return new K8sJob($this->cluster, $template);
         }
 
         return $template;
@@ -87,7 +86,6 @@ class K8sCronJob extends K8sResource implements InteractsWithK8sCluster, Watchab
     /**
      * Retrieve the schedule.
      *
-     * @param  bool  $asInstance
      * @return CronExpression|string
      */
     public function getSchedule(bool $asInstance = true)
@@ -95,7 +93,7 @@ class K8sCronJob extends K8sResource implements InteractsWithK8sCluster, Watchab
         $schedule = $this->getSpec('schedule', '* * * * *');
 
         if ($asInstance) {
-            $schedule = CronExpression::factory($schedule);
+            return CronExpression::factory($schedule);
         }
 
         return $schedule;
@@ -106,7 +104,7 @@ class K8sCronJob extends K8sResource implements InteractsWithK8sCluster, Watchab
      *
      * @return DateTime|null
      */
-    public function getLastSchedule()
+    public function getLastSchedule(): ?\Carbon\Carbon
     {
         if (! $lastSchedule = $this->getStatus('lastScheduleTime')) {
             return null;
@@ -122,8 +120,6 @@ class K8sCronJob extends K8sResource implements InteractsWithK8sCluster, Watchab
      */
     public function getActiveJobs()
     {
-        return collect($this->getStatus('active', []))->map(function ($job) {
-            return $this->cluster->getJobByName($job['name'], $this->getNamespace());
-        });
+        return collect($this->getStatus('active', []))->map(fn(array $job) => $this->cluster->getJobByName($job['name'], $this->getNamespace()));
     }
 }

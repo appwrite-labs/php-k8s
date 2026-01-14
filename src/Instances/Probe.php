@@ -6,9 +6,6 @@ class Probe extends Instance
 {
     /**
      * Initialize the class.
-     *
-     * @param  array  $attributes
-     * @return void
      */
     public function __construct(array $attributes = [])
     {
@@ -21,7 +18,6 @@ class Probe extends Instance
     /**
      * Attach a command to the probe.
      *
-     * @param  array  $command
      * @return $this
      */
     public function command(array $command)
@@ -36,16 +32,12 @@ class Probe extends Instance
      */
     public function getCommand()
     {
-        return $this->getAttribute('exec.command', null);
+        return $this->getAttribute('exec.command');
     }
 
     /**
      * Set the HTTP checks for given path and port.
      *
-     * @param  string  $path
-     * @param  int  $port
-     * @param  array  $headers
-     * @param  string  $scheme
      * @return $this
      */
     public function http(string $path = '/healthz', int $port = 8080, array $headers = [], string $scheme = 'HTTP')
@@ -56,10 +48,8 @@ class Probe extends Instance
             'scheme' => $scheme,
         ];
 
-        if (count($headers) > 0) {
-            $probeData['httpHeaders'] = collect($headers)->map(function ($value, $key) {
-                return ['name' => $key, 'value' => $value];
-            })->values()->toArray();
+        if ($headers !== []) {
+            $probeData['httpHeaders'] = collect($headers)->map(fn($value, $key): array => ['name' => $key, 'value' => $value])->values()->toArray();
         }
 
         return $this->setAttribute('httpGet', $probeData);
@@ -68,11 +58,9 @@ class Probe extends Instance
     /**
      * Set the TCP checks for a given port.
      *
-     * @param  int  $port
-     * @param  string  $host
      * @return $this
      */
-    public function tcp(int $port, string $host = null)
+    public function tcp(int $port, ?string $host = null)
     {
         if ($host) {
             $this->setAttribute('tcpSocket.host', $host);

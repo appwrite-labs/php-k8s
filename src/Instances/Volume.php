@@ -11,73 +11,62 @@ class Volume extends Instance
     /**
      * Create an empty directory volume.
      *
-     * @param  string  $name
      * @return $this
      */
     public function emptyDirectory(string $name)
     {
         return $this->setAttribute('name', $name)
-            ->setAttribute('emptyDir', (object) new stdClass);
+            ->setAttribute('emptyDir', new stdClass);
     }
 
     /**
      * Load a ConfigMap volume.
      *
-     * @param  \RenokiCo\PhpK8s\Kinds\K8sConfigMap  $configmap
      * @return $this
      */
-    public function fromConfigMap(K8sConfigMap $configmap)
+    public function fromConfigMap(K8sConfigMap $k8sConfigMap)
     {
-        return $this->setAttribute('name', "{$configmap->getName()}-volume")
-            ->setAttribute('configMap', ['name' => $configmap->getName()]);
+        return $this->setAttribute('name', $k8sConfigMap->getName() . '-volume')
+            ->setAttribute('configMap', ['name' => $k8sConfigMap->getName()]);
     }
 
     /**
      * Attach a volume from a secret file.
      *
-     * @param  \RenokiCo\PhpK8s\Kinds\K8sSecret  $secret
      * @return $this
      */
-    public function fromSecret(K8sSecret $secret)
+    public function fromSecret(K8sSecret $k8sSecret)
     {
-        return $this->setAttribute('name', "{$secret->getName()}-secret-volume")
-            ->setAttribute('secret', ['secretName' => $secret->getName()]);
+        return $this->setAttribute('name', $k8sSecret->getName() . '-secret-volume')
+            ->setAttribute('secret', ['secretName' => $k8sSecret->getName()]);
     }
 
     /**
      * Create a GCE Persistent Disk instance.
      *
-     * @param  string  $diskName
-     * @param  string  $fsType
      * @return $this
      */
     public function gcePersistentDisk(string $diskName, string $fsType = 'ext4')
     {
-        return $this->setAttribute('name', "{$diskName}-volume")
+        return $this->setAttribute('name', $diskName . '-volume')
             ->setAttribute('gcePersistentDisk', ['pdName' => $diskName, 'fsType' => $fsType]);
     }
 
     /**
      * Create a AWS EBS instance.
      *
-     * @param  string  $volumeId
-     * @param  string  $fsType
      * @return $this
      */
     public function awsEbs(string $volumeId, string $fsType = 'ext4')
     {
-        return $this->setAttribute('name', "{$volumeId}-volume")
+        return $this->setAttribute('name', $volumeId . '-volume')
             ->setAttribute('awsElasticBlockStore', ['volumeID' => $volumeId, 'fsType' => $fsType]);
     }
 
     /**
      * Mount the volume to a specific path.
-     *
-     * @param  string  $mountPath
-     * @param  string|null  $subPath
-     * @return \RenokiCo\PhpK8s\Instances\MountedVolume
      */
-    public function mountTo(string $mountPath, string $subPath = null)
+    public function mountTo(string $mountPath, ?string $subPath = null): \RenokiCo\PhpK8s\Instances\MountedVolume
     {
         return MountedVolume::from($this)->mountTo($mountPath, $subPath);
     }

@@ -8,7 +8,7 @@ use RenokiCo\PhpK8s\K8s;
 
 class ContainerTest extends TestCase
 {
-    public function test_container_build()
+    public function test_container_build(): void
     {
         $container = K8s::container();
 

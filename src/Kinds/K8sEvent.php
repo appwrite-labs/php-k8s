@@ -24,19 +24,18 @@ class K8sEvent extends K8sResource implements InteractsWithK8sCluster, Watchable
     /**
      * Attach the given resource to the event.
      *
-     * @param  \RenokiCo\PhpK8s\Kinds\K8sResource  $resource
      * @return $this
      */
-    public function setResource(K8sResource $resource)
+    public function setResource(K8sResource $k8sResource)
     {
         $object = [
-            'apiVersion' => $resource->getApiVersion(),
-            'kind' => $resource::getKind(),
-            'name' => $resource->getName(),
-            'namespace' => $resource->getNamespace(),
+            'apiVersion' => $k8sResource->getApiVersion(),
+            'kind' => $k8sResource::getKind(),
+            'name' => $k8sResource->getName(),
+            'namespace' => $k8sResource->getNamespace(),
         ];
 
-        if ($resourceVersion = $resource->getResourceVersion()) {
+        if ($resourceVersion = $k8sResource->getResourceVersion()) {
             $object['resourceVersion'] = $resourceVersion;
         }
 
@@ -46,9 +45,7 @@ class K8sEvent extends K8sResource implements InteractsWithK8sCluster, Watchable
     /**
      * Emit or update the event with the given name.
      *
-     * @param  array  $query
      * @return \RenokiCo\PhpK8s\Kinds\K8sResource
-     *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
     public function emitOrUpdate(array $query = ['pretty' => 1])

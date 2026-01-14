@@ -18,10 +18,9 @@ abstract class TestCase extends Orchestra
 
     /**
      * Set up the tests.
-     *
-     * @return void
      */
-    public function setUp(): void
+    #[\Override]
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -29,7 +28,7 @@ abstract class TestCase extends Orchestra
 
         $this->cluster->withoutSslChecks();
 
-        set_exception_handler(function ($exception) {
+        set_exception_handler(function ($exception): void {
             if ($exception instanceof PhpK8sException) {
                 dump($exception->getPayload());
                 dump($exception->getMessage());
@@ -58,7 +57,7 @@ abstract class TestCase extends Orchestra
      * @param  mixed  $app
      * @return void
      */
-    public function getEnvironmentSetUp($app)
+    protected function getEnvironmentSetUp($app)
     {
         //
     }

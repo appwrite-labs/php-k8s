@@ -8,7 +8,7 @@ use RenokiCo\PhpK8s\Test\Kinds\SealedSecret;
 
 class YamlTest extends TestCase
 {
-    public function test_yaml_import_multiple_kinds_in_same_file()
+    public function test_yaml_import_multiple_kinds_in_same_file(): void
     {
         $instances = $this->cluster->fromYamlFile(__DIR__.'/yaml/configmap_and_secret.yaml');
 
@@ -24,18 +24,16 @@ class YamlTest extends TestCase
         $this->assertEquals(['postgres' => 'postgres'], $secret->getData(true));
     }
 
-    public function test_yaml_import_with_handler()
+    public function test_yaml_import_with_handler(): void
     {
-        $cm = $this->cluster->fromYamlFile(__DIR__.'/yaml/configmap_with_placeholder.yaml', function ($content) {
-            return str_replace('{value}', 'assigned_value', $content);
-        });
+        $cm = $this->cluster->fromYamlFile(__DIR__.'/yaml/configmap_with_placeholder.yaml', fn($content): string|array => str_replace('{value}', 'assigned_value', $content));
 
         $this->assertEquals('v1', $cm->getApiVersion());
         $this->assertEquals('settings', $cm->getName());
         $this->assertEquals(['key' => 'assigned_value'], $cm->getData());
     }
 
-    public function test_yaml_template()
+    public function test_yaml_template(): void
     {
         $replacements = [
             'value' => 'assigned_value_at_template',
@@ -49,7 +47,7 @@ class YamlTest extends TestCase
         $this->assertEquals(['key' => 'assigned_value_at_template'], $cm->getData());
     }
 
-    public function test_yaml_import_for_crds()
+    public function test_yaml_import_for_crds(): void
     {
         IstioGateway::register();
 
@@ -85,7 +83,7 @@ class YamlTest extends TestCase
         $this->assertInstanceOf(IstioGateway::class, $gateway);
     }
 
-    public function test_yaml_import_for_crds_without_namespace()
+    public function test_yaml_import_for_crds_without_namespace(): void
     {
         IstioGatewayNoNamespacedVersion::register('istioGateway');
 
@@ -121,7 +119,7 @@ class YamlTest extends TestCase
         $this->assertInstanceOf(IstioGatewayNoNamespacedVersion::class, $gateway);
     }
 
-    public function test_creation_and_update_from_yaml_file()
+    public function test_creation_and_update_from_yaml_file(): void
     {
         SealedSecret::register('sealedSecret');
 

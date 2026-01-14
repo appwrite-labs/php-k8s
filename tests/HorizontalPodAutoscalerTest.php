@@ -11,7 +11,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class HorizontalPodAutoscalerTest extends TestCase
 {
-    public function test_horizontal_pod_autoscaler_build()
+    public function test_horizontal_pod_autoscaler_build(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -20,37 +20,37 @@ class HorizontalPodAutoscalerTest extends TestCase
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setContainers([$mysql]);
 
-        $dep = $this->cluster->deployment()
+        $k8sDeployment = $this->cluster->deployment()
             ->setName('mysql')
             ->setLabels(['tier' => 'backend'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setReplicas(3)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
-        $cpuMetric = K8s::metric()->cpu()->averageUtilization(70);
+        $resourceMetric = K8s::metric()->cpu()->averageUtilization(70);
 
-        $hpa = $this->cluster->horizontalPodAutoscaler()
+        $k8sHorizontalPodAutoscaler = $this->cluster->horizontalPodAutoscaler()
             ->setName('mysql-hpa')
             ->setLabels(['tier' => 'backend'])
-            ->setResource($dep)
-            ->addMetrics([$cpuMetric])
-            ->setMetrics([$cpuMetric])
+            ->setResource($k8sDeployment)
+            ->addMetrics([$resourceMetric])
+            ->setMetrics([$resourceMetric])
             ->min(1)
             ->max(10);
 
-        $this->assertEquals('autoscaling/v2', $hpa->getApiVersion());
-        $this->assertEquals('mysql-hpa', $hpa->getName());
-        $this->assertEquals(['tier' => 'backend'], $hpa->getLabels());
-        $this->assertEquals([$cpuMetric->toArray()], $hpa->getMetrics());
-        $this->assertEquals(1, $hpa->getMinReplicas());
-        $this->assertEquals(10, $hpa->getMaxReplicas());
+        $this->assertEquals('autoscaling/v2', $k8sHorizontalPodAutoscaler->getApiVersion());
+        $this->assertEquals('mysql-hpa', $k8sHorizontalPodAutoscaler->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sHorizontalPodAutoscaler->getLabels());
+        $this->assertEquals([$resourceMetric->toArray()], $k8sHorizontalPodAutoscaler->getMetrics());
+        $this->assertEquals(1, $k8sHorizontalPodAutoscaler->getMinReplicas());
+        $this->assertEquals(10, $k8sHorizontalPodAutoscaler->getMaxReplicas());
     }
 
-    public function test_horizontal_pod_autoscaler_from_yaml()
+    public function test_horizontal_pod_autoscaler_from_yaml(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -59,30 +59,30 @@ class HorizontalPodAutoscalerTest extends TestCase
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setContainers([$mysql]);
 
-        $dep = $this->cluster->deployment()
+        $this->cluster->deployment()
             ->setName('mysql')
             ->setLabels(['tier' => 'backend'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setReplicas(3)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
-        $cpuMetric = K8s::metric()->cpu()->averageUtilization(70);
+        $resourceMetric = K8s::metric()->cpu()->averageUtilization(70);
 
         $hpa = $this->cluster->fromYamlFile(__DIR__.'/yaml/hpa.yaml');
 
         $this->assertEquals('autoscaling/v2', $hpa->getApiVersion());
         $this->assertEquals('mysql-hpa', $hpa->getName());
         $this->assertEquals(['tier' => 'backend'], $hpa->getLabels());
-        $this->assertEquals([$cpuMetric->toArray()], $hpa->getMetrics());
+        $this->assertEquals([$resourceMetric->toArray()], $hpa->getMetrics());
         $this->assertEquals(1, $hpa->getMinReplicas());
         $this->assertEquals(10, $hpa->getMaxReplicas());
     }
 
-    public function test_horizontal_pod_autoscaler_api_interaction()
+    public function test_horizontal_pod_autoscaler_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -93,7 +93,7 @@ class HorizontalPodAutoscalerTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -104,7 +104,7 @@ class HorizontalPodAutoscalerTest extends TestCase
             ->addPort(3307, 'TCP', 'mysql-alt')
             ->setEnv(['MYSQL_ROOT_PASSWORD' => 'test']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setLabels(['tier' => 'backend', 'deployment-name' => 'mysql'])
             ->setContainers([$mysql]);
@@ -117,15 +117,15 @@ class HorizontalPodAutoscalerTest extends TestCase
             ->setReplicas(1)
             ->setUpdateStrategy('RollingUpdate')
             ->setMinReadySeconds(0)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
-        $cpuMetric = K8s::metric()->cpu()->averageUtilization(70);
+        $resourceMetric = K8s::metric()->cpu()->averageUtilization(70);
 
         $hpa = $this->cluster->horizontalPodAutoscaler()
             ->setName('mysql-hpa')
             ->setLabels(['tier' => 'backend'])
             ->setResource($dep)
-            ->addMetrics([$cpuMetric])
+            ->addMetrics([$resourceMetric])
             ->min(1)
             ->max(10);
 
@@ -144,18 +144,18 @@ class HorizontalPodAutoscalerTest extends TestCase
         $this->assertEquals('autoscaling/v2', $hpa->getApiVersion());
         $this->assertEquals('mysql-hpa', $hpa->getName());
         $this->assertEquals(['tier' => 'backend'], $hpa->getLabels());
-        $this->assertEquals([$cpuMetric->toArray()], $hpa->getMetrics());
+        $this->assertEquals([$resourceMetric->toArray()], $hpa->getMetrics());
         $this->assertEquals(1, $hpa->getMinReplicas());
         $this->assertEquals(10, $hpa->getMaxReplicas());
 
         while (! $dep->allPodsAreRunning()) {
-            dump("Waiting for pods of {$dep->getName()} to be up and running...");
+            dump(sprintf('Waiting for pods of %s to be up and running...', $dep->getName()));
             sleep(1);
         }
 
         while ($hpa->getCurrentReplicasCount() < 1) {
             $hpa->refresh();
-            dump("Awaiting for horizontal pod autoscaler {$hpa->getName()} to read the current replicas...");
+            dump(sprintf('Awaiting for horizontal pod autoscaler %s to read the current replicas...', $hpa->getName()));
             sleep(1);
         }
 
@@ -170,7 +170,7 @@ class HorizontalPodAutoscalerTest extends TestCase
         $dep->refresh();
 
         while ($dep->getReadyReplicasCount() === 0) {
-            dump("Waiting for pods of {$dep->getName()} to have ready replicas...");
+            dump(sprintf('Waiting for pods of %s to have ready replicas...', $dep->getName()));
             sleep(1);
             $dep->refresh();
         }
@@ -180,73 +180,73 @@ class HorizontalPodAutoscalerTest extends TestCase
         $this->assertTrue(is_array($hpa->getConditions()));
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $hpas = $this->cluster->getAllHorizontalPodAutoscalers();
+        $allHorizontalPodAutoscalers = $this->cluster->getAllHorizontalPodAutoscalers();
 
-        $this->assertInstanceOf(ResourcesList::class, $hpas);
+        $this->assertInstanceOf(ResourcesList::class, $allHorizontalPodAutoscalers);
 
-        foreach ($hpas as $hpa) {
-            $this->assertInstanceOf(K8sHorizontalPodAutoscaler::class, $hpa);
+        foreach ($allHorizontalPodAutoscalers as $allHorizontalPodAutoscaler) {
+            $this->assertInstanceOf(K8sHorizontalPodAutoscaler::class, $allHorizontalPodAutoscaler);
 
-            $this->assertNotNull($hpa->getName());
+            $this->assertNotNull($allHorizontalPodAutoscaler->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $hpa = $this->cluster->getHorizontalPodAutoscalerByName('mysql-hpa');
+        $k8sHorizontalPodAutoscaler = $this->cluster->getHorizontalPodAutoscalerByName('mysql-hpa');
 
-        $this->assertInstanceOf(K8sHorizontalPodAutoscaler::class, $hpa);
+        $this->assertInstanceOf(K8sHorizontalPodAutoscaler::class, $k8sHorizontalPodAutoscaler);
 
-        $this->assertTrue($hpa->isSynced());
+        $this->assertTrue($k8sHorizontalPodAutoscaler->isSynced());
 
-        $cpuMetric = K8s::metric()->cpu()->averageUtilization(70);
+        $resourceMetric = K8s::metric()->cpu()->averageUtilization(70);
 
-        $this->assertEquals('autoscaling/v2', $hpa->getApiVersion());
-        $this->assertEquals('mysql-hpa', $hpa->getName());
-        $this->assertEquals(['tier' => 'backend'], $hpa->getLabels());
-        $this->assertEquals([$cpuMetric->toArray()], $hpa->getMetrics());
-        $this->assertEquals(1, $hpa->getMinReplicas());
-        $this->assertEquals(10, $hpa->getMaxReplicas());
+        $this->assertEquals('autoscaling/v2', $k8sHorizontalPodAutoscaler->getApiVersion());
+        $this->assertEquals('mysql-hpa', $k8sHorizontalPodAutoscaler->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sHorizontalPodAutoscaler->getLabels());
+        $this->assertEquals([$resourceMetric->toArray()], $k8sHorizontalPodAutoscaler->getMetrics());
+        $this->assertEquals(1, $k8sHorizontalPodAutoscaler->getMinReplicas());
+        $this->assertEquals(10, $k8sHorizontalPodAutoscaler->getMaxReplicas());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $hpa = $this->cluster->getHorizontalPodAutoscalerByName('mysql-hpa');
+        $k8sHorizontalPodAutoscaler = $this->cluster->getHorizontalPodAutoscalerByName('mysql-hpa');
 
-        $this->assertTrue($hpa->isSynced());
+        $this->assertTrue($k8sHorizontalPodAutoscaler->isSynced());
 
-        $hpa->max(6);
+        $k8sHorizontalPodAutoscaler->max(6);
 
-        $hpa->createOrUpdate();
+        $k8sHorizontalPodAutoscaler->createOrUpdate();
 
-        $this->assertTrue($hpa->isSynced());
+        $this->assertTrue($k8sHorizontalPodAutoscaler->isSynced());
 
-        while ($hpa->getMaxReplicas() < 6) {
-            dump("Waiting for pod autoscaler {$hpa->getName()} to get to 6 max replicas...");
+        while ($k8sHorizontalPodAutoscaler->getMaxReplicas() < 6) {
+            dump(sprintf('Waiting for pod autoscaler %s to get to 6 max replicas...', $k8sHorizontalPodAutoscaler->getName()));
             sleep(1);
-            $hpa->refresh();
+            $k8sHorizontalPodAutoscaler->refresh();
         }
 
-        $cpuMetric = K8s::metric()->cpu()->averageUtilization(70);
+        $resourceMetric = K8s::metric()->cpu()->averageUtilization(70);
 
-        $this->assertEquals('autoscaling/v2', $hpa->getApiVersion());
-        $this->assertEquals('mysql-hpa', $hpa->getName());
-        $this->assertEquals(['tier' => 'backend'], $hpa->getLabels());
-        $this->assertEquals([$cpuMetric->toArray()], $hpa->getMetrics());
-        $this->assertEquals(1, $hpa->getMinReplicas());
-        $this->assertEquals(6, $hpa->getMaxReplicas());
+        $this->assertEquals('autoscaling/v2', $k8sHorizontalPodAutoscaler->getApiVersion());
+        $this->assertEquals('mysql-hpa', $k8sHorizontalPodAutoscaler->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sHorizontalPodAutoscaler->getLabels());
+        $this->assertEquals([$resourceMetric->toArray()], $k8sHorizontalPodAutoscaler->getMetrics());
+        $this->assertEquals(1, $k8sHorizontalPodAutoscaler->getMinReplicas());
+        $this->assertEquals(6, $k8sHorizontalPodAutoscaler->getMaxReplicas());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $hpa = $this->cluster->getHorizontalPodAutoscalerByName('mysql-hpa');
+        $k8sHorizontalPodAutoscaler = $this->cluster->getHorizontalPodAutoscalerByName('mysql-hpa');
 
-        $this->assertTrue($hpa->delete());
+        $this->assertTrue($k8sHorizontalPodAutoscaler->delete());
 
-        while ($hpa->exists()) {
-            dump("Awaiting for horizontal pod autoscaler {$hpa->getName()} to be deleted...");
+        while ($k8sHorizontalPodAutoscaler->exists()) {
+            dump(sprintf('Awaiting for horizontal pod autoscaler %s to be deleted...', $k8sHorizontalPodAutoscaler->getName()));
             sleep(1);
         }
 
@@ -255,7 +255,7 @@ class HorizontalPodAutoscalerTest extends TestCase
         $this->cluster->getHorizontalPodAutoscalerByName('mysql-hpa');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->horizontalPodAutoscaler()->watchAll(function ($type, $hpa) {
             if ($hpa->getName() === 'mysql-hpa') {
@@ -266,11 +266,9 @@ class HorizontalPodAutoscalerTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->horizontalPodAutoscaler()->watchByName('mysql-hpa', function ($type, $hpa) {
-            return $hpa->getName() === 'mysql-hpa';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->horizontalPodAutoscaler()->watchByName('mysql-hpa', fn($type, $hpa): bool => $hpa->getName() === 'mysql-hpa', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

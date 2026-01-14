@@ -51,7 +51,6 @@ class K8sJob extends K8sResource implements
     /**
      * Set the TTL for the job availability.
      *
-     * @param  int  $ttl
      * @return $this
      */
     public function setTTL(int $ttl = 100)
@@ -61,8 +60,6 @@ class K8sJob extends K8sResource implements
 
     /**
      * Get the selector for the pods that are owned by this resource.
-     *
-     * @return array
      */
     public function podsSelector(): array
     {
@@ -77,8 +74,6 @@ class K8sJob extends K8sResource implements
 
     /**
      * Get the amount of active pods.
-     *
-     * @return int
      */
     public function getActivePodsCount(): int
     {
@@ -87,8 +82,6 @@ class K8sJob extends K8sResource implements
 
     /**
      * Get the amount of failed pods.
-     *
-     * @return int
      */
     public function getFailedPodsCount(): int
     {
@@ -97,8 +90,6 @@ class K8sJob extends K8sResource implements
 
     /**
      * Get the amount of succeded pods.
-     *
-     * @return int
      */
     public function getSuccededPodsCount(): int
     {
@@ -110,9 +101,9 @@ class K8sJob extends K8sResource implements
      *
      * @return \DateTime|null
      */
-    public function getStartTime()
+    public function getStartTime(): ?\Carbon\Carbon
     {
-        $time = $this->getStatus('startTime', null);
+        $time = $this->getStatus('startTime');
 
         return $time ? Carbon::parse($time) : null;
     }
@@ -122,32 +113,28 @@ class K8sJob extends K8sResource implements
      *
      * @return \DateTime|null
      */
-    public function getCompletionTime()
+    public function getCompletionTime(): ?\Carbon\Carbon
     {
-        $time = $this->getStatus('completionTime', null);
+        $time = $this->getStatus('completionTime');
 
         return $time ? Carbon::parse($time) : null;
     }
 
     /**
      * Get the total run time, in seconds.
-     *
-     * @return int
      */
     public function getDurationInSeconds(): int
     {
         $startTime = $this->getStartTime();
         $completionTime = $this->getCompletionTime();
 
-        return $startTime && $completionTime
+        return $startTime instanceof \Carbon\Carbon && $completionTime instanceof \Carbon\Carbon
             ? $startTime->diffInSeconds($completionTime)
             : 0;
     }
 
     /**
      * Check if the job has completed.
-     *
-     * @return bool
      */
     public function hasCompleted(): bool
     {

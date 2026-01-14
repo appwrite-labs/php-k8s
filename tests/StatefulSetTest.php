@@ -11,7 +11,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class StatefulSetTest extends TestCase
 {
-    public function test_stateful_set_build()
+    public function test_stateful_set_build(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -20,48 +20,48 @@ class StatefulSetTest extends TestCase
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setContainers([$mysql]);
 
-        $svc = $this->cluster->service()
+        $k8sService = $this->cluster->service()
             ->setName('mysql')
             ->setPorts([
                 ['protocol' => 'TCP', 'port' => 3306, 'targetPort' => 3306],
             ]);
 
-        $standard = $this->cluster->getStorageClassByName('standard');
+        $k8sStorageClass = $this->cluster->getStorageClassByName('standard');
 
-        $pvc = $this->cluster->persistentVolumeClaim()
+        $k8sPersistentVolumeClaim = $this->cluster->persistentVolumeClaim()
             ->setName('mysql-pvc')
             ->setCapacity(1, 'Gi')
             ->setAccessModes(['ReadWriteOnce'])
-            ->setStorageClass($standard);
+            ->setStorageClass($k8sStorageClass);
 
-        $sts = $this->cluster->statefulSet()
+        $k8sStatefulSet = $this->cluster->statefulSet()
             ->setName('mysql')
             ->setLabels(['tier' => 'backend'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setReplicas(3)
-            ->setService($svc)
-            ->setTemplate($pod)
+            ->setService($k8sService)
+            ->setTemplate($k8sPod)
             ->setUpdateStrategy('RollingUpdate')
-            ->setVolumeClaims([$pvc]);
+            ->setVolumeClaims([$k8sPersistentVolumeClaim]);
 
-        $this->assertEquals('apps/v1', $sts->getApiVersion());
-        $this->assertEquals('mysql', $sts->getName());
-        $this->assertEquals(['tier' => 'backend'], $sts->getLabels());
-        $this->assertEquals(['mysql/annotation' => 'yes'], $sts->getAnnotations());
-        $this->assertEquals(3, $sts->getReplicas());
-        $this->assertEquals($svc->getName(), $sts->getService());
-        $this->assertEquals($pod->getName(), $sts->getTemplate()->getName());
-        $this->assertEquals($pvc->getName(), $sts->getVolumeClaims()[0]->getName());
+        $this->assertEquals('apps/v1', $k8sStatefulSet->getApiVersion());
+        $this->assertEquals('mysql', $k8sStatefulSet->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sStatefulSet->getLabels());
+        $this->assertEquals(['mysql/annotation' => 'yes'], $k8sStatefulSet->getAnnotations());
+        $this->assertEquals(3, $k8sStatefulSet->getReplicas());
+        $this->assertEquals($k8sService->getName(), $k8sStatefulSet->getService());
+        $this->assertEquals($k8sPod->getName(), $k8sStatefulSet->getTemplate()->getName());
+        $this->assertEquals($k8sPersistentVolumeClaim->getName(), $k8sStatefulSet->getVolumeClaims()[0]->getName());
 
-        $this->assertInstanceOf(K8sPod::class, $sts->getTemplate());
-        $this->assertInstanceOf(K8sPersistentVolumeClaim::class, $sts->getVolumeClaims()[0]);
+        $this->assertInstanceOf(K8sPod::class, $k8sStatefulSet->getTemplate());
+        $this->assertInstanceOf(K8sPersistentVolumeClaim::class, $k8sStatefulSet->getVolumeClaims()[0]);
     }
 
-    public function test_stateful_set_from_yaml()
+    public function test_stateful_set_from_yaml(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -70,23 +70,23 @@ class StatefulSetTest extends TestCase
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setContainers([$mysql]);
 
-        $svc = $this->cluster->service()
+        $k8sService = $this->cluster->service()
             ->setName('mysql')
             ->setPorts([
                 ['protocol' => 'TCP', 'port' => 3306, 'targetPort' => 3306],
             ]);
 
-        $standard = $this->cluster->getStorageClassByName('standard');
+        $k8sStorageClass = $this->cluster->getStorageClassByName('standard');
 
-        $pvc = $this->cluster->persistentVolumeClaim()
+        $k8sPersistentVolumeClaim = $this->cluster->persistentVolumeClaim()
             ->setName('mysql-pvc')
             ->setCapacity(1, 'Gi')
             ->setAccessModes(['ReadWriteOnce'])
-            ->setStorageClass($standard);
+            ->setStorageClass($k8sStorageClass);
 
         $sts = $this->cluster->fromYamlFile(__DIR__.'/yaml/statefulset.yaml');
 
@@ -95,15 +95,15 @@ class StatefulSetTest extends TestCase
         $this->assertEquals(['tier' => 'backend'], $sts->getLabels());
         $this->assertEquals(['mysql/annotation' => 'yes'], $sts->getAnnotations());
         $this->assertEquals(3, $sts->getReplicas());
-        $this->assertEquals($svc->getName(), $sts->getService());
-        $this->assertEquals($pod->getName(), $sts->getTemplate()->getName());
-        $this->assertEquals($pvc->getName(), $sts->getVolumeClaims()[0]->getName());
+        $this->assertEquals($k8sService->getName(), $sts->getService());
+        $this->assertEquals($k8sPod->getName(), $sts->getTemplate()->getName());
+        $this->assertEquals($k8sPersistentVolumeClaim->getName(), $sts->getVolumeClaims()[0]->getName());
 
         $this->assertInstanceOf(K8sPod::class, $sts->getTemplate());
         $this->assertInstanceOf(K8sPersistentVolumeClaim::class, $sts->getVolumeClaims()[0]);
     }
 
-    public function test_stateful_set_api_interaction()
+    public function test_stateful_set_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -116,7 +116,7 @@ class StatefulSetTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -127,26 +127,26 @@ class StatefulSetTest extends TestCase
             ->addPort(3307, 'TCP', 'mysql-alt')
             ->setEnv(['MYSQL_ROOT_PASSWORD' => 'test']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setLabels(['tier' => 'backend', 'statefulset-name' => 'mysql'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setContainers([$mysql]);
 
-        $svc = $this->cluster->service()
+        $k8sService = $this->cluster->service()
             ->setName('mysql')
             ->setPorts([
                 ['protocol' => 'TCP', 'port' => 3306, 'targetPort' => 3306],
             ])
             ->createOrUpdate();
 
-        $standard = $this->cluster->getStorageClassByName('standard');
+        $k8sStorageClass = $this->cluster->getStorageClassByName('standard');
 
-        $pvc = $this->cluster->persistentVolumeClaim()
+        $k8sPersistentVolumeClaim = $this->cluster->persistentVolumeClaim()
             ->setName('mysql-pvc')
             ->setCapacity(1, 'Gi')
             ->setAccessModes(['ReadWriteOnce'])
-            ->setStorageClass($standard);
+            ->setStorageClass($k8sStorageClass);
 
         $sts = $this->cluster->statefulSet()
             ->setName('mysql')
@@ -154,9 +154,9 @@ class StatefulSetTest extends TestCase
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setSelectors(['matchLabels' => ['tier' => 'backend']])
             ->setReplicas(1)
-            ->setService($svc)
-            ->setTemplate($pod)
-            ->setVolumeClaims([$pvc]);
+            ->setService($k8sService)
+            ->setTemplate($k8sPod)
+            ->setVolumeClaims([$k8sPersistentVolumeClaim]);
 
         $this->assertFalse($sts->isSynced());
         $this->assertFalse($sts->exists());
@@ -173,19 +173,19 @@ class StatefulSetTest extends TestCase
         $this->assertEquals(['tier' => 'backend'], $sts->getLabels());
         $this->assertEquals(['mysql/annotation' => 'yes'], $sts->getAnnotations());
         $this->assertEquals(1, $sts->getReplicas());
-        $this->assertEquals($svc->getName(), $sts->getService());
-        $this->assertEquals($pod->getName(), $sts->getTemplate()->getName());
-        $this->assertEquals($pvc->getName(), $sts->getVolumeClaims()[0]->getName());
+        $this->assertEquals($k8sService->getName(), $sts->getService());
+        $this->assertEquals($k8sPod->getName(), $sts->getTemplate()->getName());
+        $this->assertEquals($k8sPersistentVolumeClaim->getName(), $sts->getVolumeClaims()[0]->getName());
 
         $this->assertInstanceOf(K8sPod::class, $sts->getTemplate());
         $this->assertInstanceOf(K8sPersistentVolumeClaim::class, $sts->getVolumeClaims()[0]);
 
         while (! $sts->allPodsAreRunning()) {
-            dump("Waiting for pods of {$sts->getName()} to be up and running...");
+            dump(sprintf('Waiting for pods of %s to be up and running...', $sts->getName()));
             sleep(1);
         }
 
-        K8sStatefulSet::selectPods(function ($sts) {
+        K8sStatefulSet::selectPods(function ($sts): array {
             $this->assertInstanceOf(K8sStatefulSet::class, $sts);
 
             return ['tier' => 'backend'];
@@ -206,7 +206,7 @@ class StatefulSetTest extends TestCase
         $sts->refresh();
 
         while ($sts->getReadyReplicasCount() === 0) {
-            dump("Waiting for pods of {$sts->getName()} to have ready replicas...");
+            dump(sprintf('Waiting for pods of %s to have ready replicas...', $sts->getName()));
             sleep(1);
             $sts->refresh();
         }
@@ -218,107 +218,107 @@ class StatefulSetTest extends TestCase
         $this->assertTrue(is_array($sts->getConditions()));
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $statefulsets = $this->cluster->getAllStatefulSets();
+        $allStatefulSets = $this->cluster->getAllStatefulSets();
 
-        $this->assertInstanceOf(ResourcesList::class, $statefulsets);
+        $this->assertInstanceOf(ResourcesList::class, $allStatefulSets);
 
-        foreach ($statefulsets as $sts) {
-            $this->assertInstanceOf(K8sStatefulSet::class, $sts);
+        foreach ($allStatefulSets as $allStatefulSet) {
+            $this->assertInstanceOf(K8sStatefulSet::class, $allStatefulSet);
 
-            $this->assertNotNull($sts->getName());
+            $this->assertNotNull($allStatefulSet->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $sts = $this->cluster->getStatefulSetByName('mysql');
+        $k8sStatefulSet = $this->cluster->getStatefulSetByName('mysql');
 
-        $this->assertInstanceOf(K8sStatefulSet::class, $sts);
+        $this->assertInstanceOf(K8sStatefulSet::class, $k8sStatefulSet);
 
-        $this->assertTrue($sts->isSynced());
+        $this->assertTrue($k8sStatefulSet->isSynced());
 
-        $this->assertEquals('apps/v1', $sts->getApiVersion());
-        $this->assertEquals('mysql', $sts->getName());
-        $this->assertEquals(['tier' => 'backend'], $sts->getLabels());
-        $this->assertEquals(['mysql/annotation' => 'yes'], $sts->getAnnotations());
-        $this->assertEquals(1, $sts->getReplicas());
+        $this->assertEquals('apps/v1', $k8sStatefulSet->getApiVersion());
+        $this->assertEquals('mysql', $k8sStatefulSet->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sStatefulSet->getLabels());
+        $this->assertEquals(['mysql/annotation' => 'yes'], $k8sStatefulSet->getAnnotations());
+        $this->assertEquals(1, $k8sStatefulSet->getReplicas());
 
-        $this->assertInstanceOf(K8sPod::class, $sts->getTemplate());
-        $this->assertInstanceOf(K8sPersistentVolumeClaim::class, $sts->getVolumeClaims()[0]);
+        $this->assertInstanceOf(K8sPod::class, $k8sStatefulSet->getTemplate());
+        $this->assertInstanceOf(K8sPersistentVolumeClaim::class, $k8sStatefulSet->getVolumeClaims()[0]);
     }
 
-    public function attachPodAutoscaler()
+    public function attachPodAutoscaler(): void
     {
-        $sts = $this->cluster->getStatefulSetByName('mysql');
+        $k8sStatefulSet = $this->cluster->getStatefulSetByName('mysql');
 
-        $cpuMetric = K8s::metric()->cpu()->averageUtilization(70);
+        $resourceMetric = K8s::metric()->cpu()->averageUtilization(70);
 
-        $svcMetric = K8s::object()
-            ->setResource($sts->getServiceInstance())
+        $resourceObject = K8s::object()
+            ->setResource($k8sStatefulSet->getServiceInstance())
             ->setMetric('packets-per-second')
             ->averageValue('1k');
 
-        $hpa = $this->cluster->horizontalPodAutoscaler()
+        $k8sResource = $this->cluster->horizontalPodAutoscaler()
             ->setName('sts-mysql')
-            ->setResource($sts)
-            ->addMetrics([$cpuMetric, $svcMetric])
+            ->setResource($k8sStatefulSet)
+            ->addMetrics([$resourceMetric, $resourceObject])
             ->min(1)
             ->max(10)
             ->create();
 
-        while ($hpa->getCurrentReplicasCount() < 1) {
-            $hpa->refresh();
-            dump("Awaiting for horizontal pod autoscaler {$hpa->getName()} to read the current replicas...");
+        while ($k8sResource->getCurrentReplicasCount() < 1) {
+            $k8sResource->refresh();
+            dump(sprintf('Awaiting for horizontal pod autoscaler %s to read the current replicas...', $k8sResource->getName()));
             sleep(1);
         }
 
-        $this->assertEquals(1, $hpa->getCurrentReplicasCount());
+        $this->assertEquals(1, $k8sResource->getCurrentReplicasCount());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $sts = $this->cluster->getStatefulSetByName('mysql');
+        $k8sStatefulSet = $this->cluster->getStatefulSetByName('mysql');
 
-        $this->assertTrue($sts->isSynced());
+        $this->assertTrue($k8sStatefulSet->isSynced());
 
-        $sts->setAnnotations([]);
+        $k8sStatefulSet->setAnnotations([]);
 
-        $sts->createOrUpdate();
+        $k8sStatefulSet->createOrUpdate();
 
-        $this->assertTrue($sts->isSynced());
+        $this->assertTrue($k8sStatefulSet->isSynced());
 
-        $this->assertEquals('apps/v1', $sts->getApiVersion());
-        $this->assertEquals('mysql', $sts->getName());
-        $this->assertEquals(['tier' => 'backend'], $sts->getLabels());
-        $this->assertEquals([], $sts->getAnnotations());
-        $this->assertEquals(2, $sts->getReplicas());
+        $this->assertEquals('apps/v1', $k8sStatefulSet->getApiVersion());
+        $this->assertEquals('mysql', $k8sStatefulSet->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sStatefulSet->getLabels());
+        $this->assertEquals([], $k8sStatefulSet->getAnnotations());
+        $this->assertEquals(2, $k8sStatefulSet->getReplicas());
 
-        $this->assertInstanceOf(K8sPod::class, $sts->getTemplate());
-        $this->assertInstanceOf(K8sPersistentVolumeClaim::class, $sts->getVolumeClaims()[0]);
+        $this->assertInstanceOf(K8sPod::class, $k8sStatefulSet->getTemplate());
+        $this->assertInstanceOf(K8sPersistentVolumeClaim::class, $k8sStatefulSet->getVolumeClaims()[0]);
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $sts = $this->cluster->getStatefulSetByName('mysql');
-        $hpa = $this->cluster->getHorizontalPodAutoscalerByName('sts-mysql');
+        $k8sStatefulSet = $this->cluster->getStatefulSetByName('mysql');
+        $k8sHorizontalPodAutoscaler = $this->cluster->getHorizontalPodAutoscalerByName('sts-mysql');
 
-        $this->assertTrue($sts->delete());
-        $this->assertTrue($hpa->delete());
+        $this->assertTrue($k8sStatefulSet->delete());
+        $this->assertTrue($k8sHorizontalPodAutoscaler->delete());
 
-        while ($hpa->exists()) {
-            dump("Awaiting for horizontal pod autoscaler {$hpa->getName()} to be deleted...");
+        while ($k8sHorizontalPodAutoscaler->exists()) {
+            dump(sprintf('Awaiting for horizontal pod autoscaler %s to be deleted...', $k8sHorizontalPodAutoscaler->getName()));
             sleep(1);
         }
 
-        while ($sts->exists()) {
-            dump("Awaiting for statefulset {$sts->getName()} to be deleted...");
+        while ($k8sStatefulSet->exists()) {
+            dump(sprintf('Awaiting for statefulset %s to be deleted...', $k8sStatefulSet->getName()));
             sleep(1);
         }
 
-        while ($sts->getPods()->count() > 0) {
-            dump("Awaiting for statefulset {$sts->getName()}'s pods to be deleted...");
+        while ($k8sStatefulSet->getPods()->count() > 0) {
+            dump(sprintf("Awaiting for statefulset %s's pods to be deleted...", $k8sStatefulSet->getName()));
             sleep(1);
         }
 
@@ -328,7 +328,7 @@ class StatefulSetTest extends TestCase
         $this->cluster->getHorizontalPodAutoscalerByName('sts-mysql');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->statefulSet()->watchAll(function ($type, $sts) {
             if ($sts->getName() === 'mysql') {
@@ -339,30 +339,28 @@ class StatefulSetTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->statefulSet()->watchByName('mysql', function ($type, $sts) {
-            return $sts->getName() === 'mysql';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->statefulSet()->watchByName('mysql', fn($type, $sts): bool => $sts->getName() === 'mysql', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }
 
-    public function runScalingTests()
+    public function runScalingTests(): void
     {
-        $sts = $this->cluster->getStatefulSetByName('mysql');
+        $k8sStatefulSet = $this->cluster->getStatefulSetByName('mysql');
 
-        $scaler = $sts->scale(2);
+        $k8sScale = $k8sStatefulSet->scale(2);
 
-        while ($sts->getReadyReplicasCount() < 2 || $scaler->getReplicas() < 2) {
-            dump("Awaiting for statefulset {$sts->getName()} to scale to 2 replicas...");
-            $scaler->refresh();
-            $sts->refresh();
+        while ($k8sStatefulSet->getReadyReplicasCount() < 2 || $k8sScale->getReplicas() < 2) {
+            dump(sprintf('Awaiting for statefulset %s to scale to 2 replicas...', $k8sStatefulSet->getName()));
+            $k8sScale->refresh();
+            $k8sStatefulSet->refresh();
             sleep(1);
         }
 
-        $this->assertEquals(2, $sts->getReadyReplicasCount());
-        $this->assertEquals(2, $scaler->getReplicas());
-        $this->assertCount(2, $sts->getPods());
+        $this->assertEquals(2, $k8sStatefulSet->getReadyReplicasCount());
+        $this->assertEquals(2, $k8sScale->getReplicas());
+        $this->assertCount(2, $k8sStatefulSet->getPods());
     }
 }

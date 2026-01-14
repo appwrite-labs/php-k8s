@@ -7,7 +7,6 @@ trait HasAnnotations
     /**
      * Set the annotations.
      *
-     * @param  array  $annotations
      * @return $this
      */
     public function setAnnotations(array $annotations)
@@ -17,8 +16,6 @@ trait HasAnnotations
 
     /**
      * Get the annotations.
-     *
-     * @return array
      */
     public function getAnnotations(): array
     {
@@ -28,7 +25,6 @@ trait HasAnnotations
     /**
      * Get the annotation value from the list.
      *
-     * @param  string  $name
      * @param  mixed  $default
      * @return mixed
      */
@@ -40,7 +36,6 @@ trait HasAnnotations
     /**
      * Set or update the given annotations.
      *
-     * @param  array  $annotations
      * @return $this
      */
     public function setOrUpdateAnnotations(array $annotations = [])

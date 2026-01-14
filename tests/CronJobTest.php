@@ -12,51 +12,51 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class CronJobTest extends TestCase
 {
-    public function test_cronjob_build()
+    public function test_cronjob_build(): void
     {
         $pi = K8s::container()
             ->setName('pi')
             ->setImage('public.ecr.aws/docker/library/perl')
             ->setCommand(['perl',  '-Mbignum=bpi', '-wle', 'print bpi(200)']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('perl')
             ->setContainers([$pi])
             ->restartOnFailure()
             ->neverRestart();
 
-        $job = $this->cluster->job()
+        $k8sJob = $this->cluster->job()
             ->setName('pi')
             ->setLabels(['tier' => 'backend'])
             ->setAnnotations(['perl/annotation' => 'yes'])
             ->setTTL(3600)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
-        $cronjob = $this->cluster->cronjob()
+        $k8sCronJob = $this->cluster->cronjob()
             ->setName('pi')
             ->setLabels(['tier' => 'backend'])
             ->setAnnotations(['perl/annotation' => 'yes'])
-            ->setJobTemplate($job)
+            ->setJobTemplate($k8sJob)
             ->setSchedule(CronExpression::factory('* * * * *'));
 
-        $this->assertEquals('batch/v1', $cronjob->getApiVersion());
-        $this->assertEquals('pi', $cronjob->getName());
-        $this->assertEquals(['tier' => 'backend'], $cronjob->getLabels());
-        $this->assertEquals(['perl/annotation' => 'yes'], $cronjob->getAnnotations());
-        $this->assertEquals('Never', $pod->getRestartPolicy());
+        $this->assertEquals('batch/v1', $k8sCronJob->getApiVersion());
+        $this->assertEquals('pi', $k8sCronJob->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sCronJob->getLabels());
+        $this->assertEquals(['perl/annotation' => 'yes'], $k8sCronJob->getAnnotations());
+        $this->assertEquals('Never', $k8sPod->getRestartPolicy());
 
-        $this->assertInstanceOf(K8sJob::class, $cronjob->getJobTemplate());
-        $this->assertInstanceOf(CronExpression::class, $cronjob->getSchedule());
+        $this->assertInstanceOf(K8sJob::class, $k8sCronJob->getJobTemplate());
+        $this->assertInstanceOf(CronExpression::class, $k8sCronJob->getSchedule());
     }
 
-    public function test_cronjob_from_yaml()
+    public function test_cronjob_from_yaml(): void
     {
         $pi = K8s::container()
             ->setName('pi')
             ->setImage('public.ecr.aws/docker/library/perl')
             ->setCommand(['perl',  '-Mbignum=bpi', '-wle', 'print bpi(200)']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('perl')
             ->setContainers([$pi])
             ->restartOnFailure()
@@ -68,13 +68,13 @@ class CronJobTest extends TestCase
         $this->assertEquals('pi', $cronjob->getName());
         $this->assertEquals(['tier' => 'backend'], $cronjob->getLabels());
         $this->assertEquals(['perl/annotation' => 'yes'], $cronjob->getAnnotations());
-        $this->assertEquals('Never', $pod->getRestartPolicy());
+        $this->assertEquals('Never', $k8sPod->getRestartPolicy());
 
         $this->assertInstanceOf(K8sJob::class, $cronjob->getJobTemplate());
         $this->assertInstanceOf(CronExpression::class, $cronjob->getSchedule());
     }
 
-    public function test_cronjob_api_interaction()
+    public function test_cronjob_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -85,14 +85,14 @@ class CronJobTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $busybox = K8s::container()
             ->setName('busybox-exec')
             ->setImage('public.ecr.aws/docker/library/busybox')
             ->setCommand(['/bin/sh', '-c', 'sleep 30']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('sleep')
             ->setContainers([$busybox])
             ->restartOnFailure()
@@ -103,7 +103,7 @@ class CronJobTest extends TestCase
             ->setLabels(['tier' => 'useless'])
             ->setAnnotations(['perl/annotation' => 'no'])
             ->setTTL(3600)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
         $cronjob = $this->cluster->cronjob()
             ->setName('periodic-sleep')
@@ -126,7 +126,7 @@ class CronJobTest extends TestCase
         $this->assertEquals('periodic-sleep', $cronjob->getName());
         $this->assertEquals(['tier' => 'useless'], $cronjob->getLabels());
         $this->assertEquals(['perl/annotation' => 'no'], $cronjob->getAnnotations());
-        $this->assertEquals('Never', $pod->getRestartPolicy());
+        $this->assertEquals('Never', $k8sPod->getRestartPolicy());
 
         $this->assertInstanceOf(K8sJob::class, $cronjob->getJobTemplate());
         $this->assertInstanceOf(CronExpression::class, $cronjob->getSchedule());
@@ -137,7 +137,7 @@ class CronJobTest extends TestCase
 
         // This check is sensitive to ensuring the jobs take some time to complete.
         while ($cronjob->getActiveJobs()->count() === 0) {
-            dump("Waiting for the cronjob {$cronjob->getName()} to have active jobs...");
+            dump(sprintf('Waiting for the cronjob %s to have active jobs...', $cronjob->getName()));
             sleep(1);
             $cronjob->refresh();
             $activeJobs = $cronjob->getActiveJobs();
@@ -146,7 +146,7 @@ class CronJobTest extends TestCase
         $job = $activeJobs->first();
 
         while (! $job->hasCompleted()) {
-            dump("Waiting for pods of {$job->getName()} to finish executing...");
+            dump(sprintf('Waiting for pods of %s to finish executing...', $job->getName()));
             sleep(1);
             $job->refresh();
         }
@@ -155,7 +155,7 @@ class CronJobTest extends TestCase
         $this->assertTrue($cronjob->getLastSchedule()->gt(Carbon::now()->subSeconds(60)));
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
         $cronjobs = $this->cluster->getAllCronJobs();
 
@@ -168,7 +168,7 @@ class CronJobTest extends TestCase
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
         $cronjob = $this->cluster->getCronJobByName('periodic-sleep');
 
@@ -184,7 +184,7 @@ class CronJobTest extends TestCase
         $this->assertInstanceOf(K8sJob::class, $cronjob->getJobTemplate());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
         $cronjob = $this->cluster->getCronJobByName('periodic-sleep');
 
@@ -204,14 +204,14 @@ class CronJobTest extends TestCase
         $this->assertInstanceOf(K8sJob::class, $cronjob->getJobTemplate());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
         $cronjob = $this->cluster->getCronJobByName('periodic-sleep');
 
         $this->assertTrue($cronjob->delete());
 
         while ($cronjob->exists()) {
-            dump("Awaiting for cronjob {$cronjob->getName()} to be deleted...");
+            dump(sprintf('Awaiting for cronjob %s to be deleted...', $cronjob->getName()));
             sleep(1);
         }
 
@@ -220,7 +220,7 @@ class CronJobTest extends TestCase
         $this->cluster->getCronJobByName('periodic-sleep');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->cronjob()->watchAll(function ($type, $cronjob) {
             if ($cronjob->getName() === 'periodic-sleep') {
@@ -231,11 +231,9 @@ class CronJobTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->cronjob()->watchByName('periodic-sleep', function ($type, $cronjob) {
-            return $cronjob->getName() === 'periodic-sleep';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->cronjob()->watchByName('periodic-sleep', fn($type, $cronjob): bool => $cronjob->getName() === 'periodic-sleep', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

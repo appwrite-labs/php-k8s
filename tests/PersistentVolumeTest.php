@@ -8,7 +8,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class PersistentVolumeTest extends TestCase
 {
-    public function test_persistent_volume_build()
+    public function test_persistent_volume_build(): void
     {
         $sc = $this->cluster->storageClass()
             ->setName('sc1')
@@ -16,7 +16,7 @@ class PersistentVolumeTest extends TestCase
             ->setParameters(['type' => 'sc1'])
             ->setMountOptions(['debug']);
 
-        $pv = $this->cluster->persistentVolume()
+        $k8sPersistentVolume = $this->cluster->persistentVolume()
             ->setName('app')
             ->setLabels(['tier' => 'backend'])
             ->setSource('awsElasticBlockStore', ['fsType' => 'ext4', 'volumeID' => 'vol-xxxxx'])
@@ -25,17 +25,17 @@ class PersistentVolumeTest extends TestCase
             ->setMountOptions(['debug'])
             ->setStorageClass($sc);
 
-        $this->assertEquals('v1', $pv->getApiVersion());
-        $this->assertEquals('app', $pv->getName());
-        $this->assertEquals(['tier' => 'backend'], $pv->getLabels());
-        $this->assertEquals(['fsType' => 'ext4', 'volumeID' => 'vol-xxxxx'], $pv->getSpec('awsElasticBlockStore'));
-        $this->assertEquals('1Gi', $pv->getCapacity());
-        $this->assertEquals(['ReadWriteOnce'], $pv->getAccessModes());
-        $this->assertEquals(['debug'], $pv->getMountOptions());
-        $this->assertEquals('sc1', $pv->getStorageClass());
+        $this->assertEquals('v1', $k8sPersistentVolume->getApiVersion());
+        $this->assertEquals('app', $k8sPersistentVolume->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sPersistentVolume->getLabels());
+        $this->assertEquals(['fsType' => 'ext4', 'volumeID' => 'vol-xxxxx'], $k8sPersistentVolume->getSpec('awsElasticBlockStore'));
+        $this->assertEquals('1Gi', $k8sPersistentVolume->getCapacity());
+        $this->assertEquals(['ReadWriteOnce'], $k8sPersistentVolume->getAccessModes());
+        $this->assertEquals(['debug'], $k8sPersistentVolume->getMountOptions());
+        $this->assertEquals('sc1', $k8sPersistentVolume->getStorageClass());
     }
 
-    public function test_persistent_volume_from_yaml()
+    public function test_persistent_volume_from_yaml(): void
     {
         $pv = $this->cluster->fromYamlFile(__DIR__.'/yaml/persistentvolume.yaml');
 
@@ -49,7 +49,7 @@ class PersistentVolumeTest extends TestCase
         $this->assertEquals('sc1', $pv->getStorageClass());
     }
 
-    public function test_persistent_volume_api_interaction()
+    public function test_persistent_volume_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -60,7 +60,7 @@ class PersistentVolumeTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $sc = $this->cluster->storageClass()
             ->setName('sc1')
@@ -97,7 +97,7 @@ class PersistentVolumeTest extends TestCase
         $this->assertEquals('sc1', $pv->getStorageClass());
 
         while (! $pv->isAvailable()) {
-            dump("Waiting for PV {$pv->getName()} to be available...");
+            dump(sprintf('Waiting for PV %s to be available...', $pv->getName()));
             sleep(1);
             $pv->refresh();
         }
@@ -106,67 +106,67 @@ class PersistentVolumeTest extends TestCase
         $this->assertFalse($pv->isBound());
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $pvs = $this->cluster->getAllPersistentVolumes();
+        $allPersistentVolumes = $this->cluster->getAllPersistentVolumes();
 
-        $this->assertInstanceOf(ResourcesList::class, $pvs);
+        $this->assertInstanceOf(ResourcesList::class, $allPersistentVolumes);
 
-        foreach ($pvs as $pv) {
-            $this->assertInstanceOf(K8sPersistentVolume::class, $pv);
+        foreach ($allPersistentVolumes as $allPersistentVolume) {
+            $this->assertInstanceOf(K8sPersistentVolume::class, $allPersistentVolume);
 
-            $this->assertNotNull($pv->getName());
+            $this->assertNotNull($allPersistentVolume->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $pv = $this->cluster->getPersistentVolumeByName('app');
+        $k8sPersistentVolume = $this->cluster->getPersistentVolumeByName('app');
 
-        $this->assertInstanceOf(K8sPersistentVolume::class, $pv);
+        $this->assertInstanceOf(K8sPersistentVolume::class, $k8sPersistentVolume);
 
-        $this->assertTrue($pv->isSynced());
+        $this->assertTrue($k8sPersistentVolume->isSynced());
 
-        $this->assertEquals('v1', $pv->getApiVersion());
-        $this->assertEquals('app', $pv->getName());
-        $this->assertEquals(['tier' => 'backend'], $pv->getLabels());
-        $this->assertEquals(['fsType' => 'ext4', 'volumeID' => 'vol-xxxxx'], $pv->getSpec('awsElasticBlockStore'));
-        $this->assertEquals('1Gi', $pv->getCapacity());
-        $this->assertEquals(['ReadWriteOnce'], $pv->getAccessModes());
-        $this->assertEquals(['debug'], $pv->getMountOptions());
-        $this->assertEquals('sc1', $pv->getStorageClass());
+        $this->assertEquals('v1', $k8sPersistentVolume->getApiVersion());
+        $this->assertEquals('app', $k8sPersistentVolume->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sPersistentVolume->getLabels());
+        $this->assertEquals(['fsType' => 'ext4', 'volumeID' => 'vol-xxxxx'], $k8sPersistentVolume->getSpec('awsElasticBlockStore'));
+        $this->assertEquals('1Gi', $k8sPersistentVolume->getCapacity());
+        $this->assertEquals(['ReadWriteOnce'], $k8sPersistentVolume->getAccessModes());
+        $this->assertEquals(['debug'], $k8sPersistentVolume->getMountOptions());
+        $this->assertEquals('sc1', $k8sPersistentVolume->getStorageClass());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $pv = $this->cluster->getPersistentVolumeByName('app');
+        $k8sPersistentVolume = $this->cluster->getPersistentVolumeByName('app');
 
-        $this->assertTrue($pv->isSynced());
+        $this->assertTrue($k8sPersistentVolume->isSynced());
 
-        $pv->setMountOptions(['debug', 'test']);
+        $k8sPersistentVolume->setMountOptions(['debug', 'test']);
 
-        $pv->createOrUpdate();
+        $k8sPersistentVolume->createOrUpdate();
 
-        $this->assertTrue($pv->isSynced());
+        $this->assertTrue($k8sPersistentVolume->isSynced());
 
-        $this->assertEquals('v1', $pv->getApiVersion());
-        $this->assertEquals('app', $pv->getName());
-        $this->assertEquals(['tier' => 'backend'], $pv->getLabels());
-        $this->assertEquals(['fsType' => 'ext4', 'volumeID' => 'vol-xxxxx'], $pv->getSpec('awsElasticBlockStore'));
-        $this->assertEquals('1Gi', $pv->getCapacity());
-        $this->assertEquals(['ReadWriteOnce'], $pv->getAccessModes());
-        $this->assertEquals(['debug', 'test'], $pv->getMountOptions());
-        $this->assertEquals('sc1', $pv->getStorageClass());
+        $this->assertEquals('v1', $k8sPersistentVolume->getApiVersion());
+        $this->assertEquals('app', $k8sPersistentVolume->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sPersistentVolume->getLabels());
+        $this->assertEquals(['fsType' => 'ext4', 'volumeID' => 'vol-xxxxx'], $k8sPersistentVolume->getSpec('awsElasticBlockStore'));
+        $this->assertEquals('1Gi', $k8sPersistentVolume->getCapacity());
+        $this->assertEquals(['ReadWriteOnce'], $k8sPersistentVolume->getAccessModes());
+        $this->assertEquals(['debug', 'test'], $k8sPersistentVolume->getMountOptions());
+        $this->assertEquals('sc1', $k8sPersistentVolume->getStorageClass());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $pv = $this->cluster->getPersistentVolumeByName('app');
+        $k8sPersistentVolume = $this->cluster->getPersistentVolumeByName('app');
 
-        $this->assertTrue($pv->delete());
+        $this->assertTrue($k8sPersistentVolume->delete());
 
-        while ($pv->exists()) {
-            dump("Awaiting for PV {$pv->getName()} to be deleted...");
+        while ($k8sPersistentVolume->exists()) {
+            dump(sprintf('Awaiting for PV %s to be deleted...', $k8sPersistentVolume->getName()));
             sleep(1);
         }
 
@@ -175,7 +175,7 @@ class PersistentVolumeTest extends TestCase
         $this->cluster->getPersistentVolumeByName('app');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->persistentVolume()->watchAll(function ($type, $pv) {
             if ($pv->getName() === 'app') {
@@ -186,11 +186,9 @@ class PersistentVolumeTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->persistentVolume()->watchByName('app', function ($type, $pv) {
-            return $pv->getName() === 'app';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->persistentVolume()->watchByName('app', fn($type, $pv): bool => $pv->getName() === 'app', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

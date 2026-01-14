@@ -8,29 +8,29 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class ServiceAccountTest extends TestCase
 {
-    public function test_service_account_build()
+    public function test_service_account_build(): void
     {
-        $secret = $this->cluster->secret()
+        $k8sSecret = $this->cluster->secret()
             ->setName('passwords')
             ->addData('postgres', 'postgres');
 
-        $sa = $this->cluster->serviceAccount()
+        $k8sServiceAccount = $this->cluster->serviceAccount()
             ->setName('user1')
             ->setLabels(['tier' => 'backend'])
-            ->addSecrets([$secret])
-            ->setSecrets([$secret])
+            ->addSecrets([$k8sSecret])
+            ->setSecrets([$k8sSecret])
             ->addPulledSecrets(['postgres']);
 
-        $this->assertEquals('v1', $sa->getApiVersion());
-        $this->assertEquals('user1', $sa->getName());
-        $this->assertEquals(['tier' => 'backend'], $sa->getLabels());
-        $this->assertEquals([['name' => $secret->getName()]], $sa->getSecrets());
-        $this->assertEquals([['name' => 'postgres']], $sa->getImagePullSecrets());
+        $this->assertEquals('v1', $k8sServiceAccount->getApiVersion());
+        $this->assertEquals('user1', $k8sServiceAccount->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sServiceAccount->getLabels());
+        $this->assertEquals([['name' => $k8sSecret->getName()]], $k8sServiceAccount->getSecrets());
+        $this->assertEquals([['name' => 'postgres']], $k8sServiceAccount->getImagePullSecrets());
     }
 
-    public function test_service_account_from_yaml()
+    public function test_service_account_from_yaml(): void
     {
-        $secret = $this->cluster->secret()
+        $k8sSecret = $this->cluster->secret()
             ->setName('passwords')
             ->setLabels(['tier' => 'backend'])
             ->addData('postgres', 'postgres');
@@ -40,11 +40,11 @@ class ServiceAccountTest extends TestCase
         $this->assertEquals('v1', $sa->getApiVersion());
         $this->assertEquals('user1', $sa->getName());
         $this->assertEquals(['tier' => 'backend'], $sa->getLabels());
-        $this->assertEquals([['name' => $secret->getName()]], $sa->getSecrets());
+        $this->assertEquals([['name' => $k8sSecret->getName()]], $sa->getSecrets());
         $this->assertEquals([['name' => 'postgres']], $sa->getImagePullSecrets());
     }
 
-    public function test_service_account_api_interaction()
+    public function test_service_account_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -55,7 +55,7 @@ class ServiceAccountTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $secret = $this->cluster->secret()
             ->setName('passwords')
@@ -86,62 +86,62 @@ class ServiceAccountTest extends TestCase
         $this->assertEquals([['name' => 'postgres']], $sa->getImagePullSecrets());
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $serviceAccounts = $this->cluster->getAllServiceAccounts();
+        $allServiceAccounts = $this->cluster->getAllServiceAccounts();
 
-        $this->assertInstanceOf(ResourcesList::class, $serviceAccounts);
+        $this->assertInstanceOf(ResourcesList::class, $allServiceAccounts);
 
-        foreach ($serviceAccounts as $sa) {
-            $this->assertInstanceOf(K8sServiceAccount::class, $sa);
+        foreach ($allServiceAccounts as $allServiceAccount) {
+            $this->assertInstanceOf(K8sServiceAccount::class, $allServiceAccount);
 
-            $this->assertNotNull($sa->getName());
+            $this->assertNotNull($allServiceAccount->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $sa = $this->cluster->getServiceAccountByName('user1');
-        $secret = $this->cluster->getSecretByName('passwords');
+        $k8sServiceAccount = $this->cluster->getServiceAccountByName('user1');
+        $k8sSecret = $this->cluster->getSecretByName('passwords');
 
-        $this->assertInstanceOf(K8sServiceAccount::class, $sa);
+        $this->assertInstanceOf(K8sServiceAccount::class, $k8sServiceAccount);
 
-        $this->assertTrue($sa->isSynced());
+        $this->assertTrue($k8sServiceAccount->isSynced());
 
-        $this->assertEquals('v1', $sa->getApiVersion());
-        $this->assertEquals('user1', $sa->getName());
-        $this->assertEquals(['tier' => 'backend'], $sa->getLabels());
-        $this->assertEquals(['name' => $secret->getName()], $sa->getSecrets()[0]);
-        $this->assertEquals([['name' => 'postgres']], $sa->getImagePullSecrets());
+        $this->assertEquals('v1', $k8sServiceAccount->getApiVersion());
+        $this->assertEquals('user1', $k8sServiceAccount->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sServiceAccount->getLabels());
+        $this->assertEquals(['name' => $k8sSecret->getName()], $k8sServiceAccount->getSecrets()[0]);
+        $this->assertEquals([['name' => 'postgres']], $k8sServiceAccount->getImagePullSecrets());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $sa = $this->cluster->getServiceAccountByName('user1');
-        $secret = $this->cluster->getSecretByName('passwords');
+        $k8sServiceAccount = $this->cluster->getServiceAccountByName('user1');
+        $k8sSecret = $this->cluster->getSecretByName('passwords');
 
-        $this->assertTrue($sa->isSynced());
+        $this->assertTrue($k8sServiceAccount->isSynced());
 
-        $sa->addPulledSecrets(['postgres2']);
+        $k8sServiceAccount->addPulledSecrets(['postgres2']);
 
-        $sa->createOrUpdate();
+        $k8sServiceAccount->createOrUpdate();
 
-        $this->assertTrue($sa->isSynced());
+        $this->assertTrue($k8sServiceAccount->isSynced());
 
-        $this->assertEquals('v1', $sa->getApiVersion());
-        $this->assertEquals('user1', $sa->getName());
-        $this->assertEquals(['tier' => 'backend'], $sa->getLabels());
-        $this->assertEquals(['name' => $secret->getName()], $sa->getSecrets()[0]);
-        $this->assertEquals([['name' => 'postgres'], ['name' => 'postgres2']], $sa->getImagePullSecrets());
+        $this->assertEquals('v1', $k8sServiceAccount->getApiVersion());
+        $this->assertEquals('user1', $k8sServiceAccount->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sServiceAccount->getLabels());
+        $this->assertEquals(['name' => $k8sSecret->getName()], $k8sServiceAccount->getSecrets()[0]);
+        $this->assertEquals([['name' => 'postgres'], ['name' => 'postgres2']], $k8sServiceAccount->getImagePullSecrets());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $sa = $this->cluster->getServiceAccountByName('user1');
+        $k8sServiceAccount = $this->cluster->getServiceAccountByName('user1');
 
-        $this->assertTrue($sa->delete());
+        $this->assertTrue($k8sServiceAccount->delete());
 
-        while ($sa->exists()) {
+        while ($k8sServiceAccount->exists()) {
             sleep(1);
         }
 
@@ -150,7 +150,7 @@ class ServiceAccountTest extends TestCase
         $this->cluster->getServiceAccountByName('user1');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->serviceAccount()->watchAll(function ($type, $serviceAccount) {
             if ($serviceAccount->getName() === 'user1') {
@@ -161,11 +161,9 @@ class ServiceAccountTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->serviceAccount()->watchByName('user1', function ($type, $serviceAccount) {
-            return $serviceAccount->getName() === 'user1';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->serviceAccount()->watchByName('user1', fn($type, $serviceAccount): bool => $serviceAccount->getName() === 'user1', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

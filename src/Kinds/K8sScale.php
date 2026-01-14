@@ -41,8 +41,6 @@ class K8sScale extends K8sResource implements InteractsWithK8sCluster
 
     /**
      * Get the path, prefixed by '/', that points to the specific resource.
-     *
-     * @return string
      */
     public function resourcePath(): string
     {
@@ -52,12 +50,11 @@ class K8sScale extends K8sResource implements InteractsWithK8sCluster
     /**
      * Set the original scalable resource for this scale.
      *
-     * @param  \RenokiCo\PhpK8s\Kinds\K8sResource  $resource
      * @return $this
      */
-    public function setScalableResource(K8sResource $resource)
+    public function setScalableResource(K8sResource $k8sResource): static
     {
-        $this->resource = $resource;
+        $this->resource = $k8sResource;
 
         return $this;
     }
@@ -65,7 +62,6 @@ class K8sScale extends K8sResource implements InteractsWithK8sCluster
     /**
      * Make a call to the cluster to get a fresh instance.
      *
-     * @param  array  $query
      * @return $this
      */
     public function refresh(array $query = ['pretty' => 1])
@@ -78,7 +74,6 @@ class K8sScale extends K8sResource implements InteractsWithK8sCluster
     /**
      * Make a call to the cluster to get fresh original values.
      *
-     * @param  array  $query
      * @return $this
      */
     public function refreshOriginal(array $query = ['pretty' => 1])

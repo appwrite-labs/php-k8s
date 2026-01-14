@@ -8,18 +8,18 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class NamespaceTest extends TestCase
 {
-    public function test_namespace_build()
+    public function test_namespace_build(): void
     {
-        $ns = $this->cluster->namespace()
+        $k8sNamespace = $this->cluster->namespace()
             ->setName('production')
             ->setLabels(['tier' => 'backend']);
 
-        $this->assertEquals('v1', $ns->getApiVersion());
-        $this->assertEquals('production', $ns->getName());
-        $this->assertEquals(['tier' => 'backend'], $ns->getLabels());
+        $this->assertEquals('v1', $k8sNamespace->getApiVersion());
+        $this->assertEquals('production', $k8sNamespace->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sNamespace->getLabels());
     }
 
-    public function test_namespace_from_yaml()
+    public function test_namespace_from_yaml(): void
     {
         $ns = $this->cluster->fromYamlFile(__DIR__.'/yaml/namespace.yaml');
 
@@ -28,7 +28,7 @@ class NamespaceTest extends TestCase
         $this->assertEquals(['tier' => 'backend'], $ns->getLabels());
     }
 
-    public function test_namespace_api_interaction()
+    public function test_namespace_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -39,36 +39,36 @@ class NamespaceTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $namespaces = $this->cluster->getAllNamespaces();
+        $allNamespaces = $this->cluster->getAllNamespaces();
 
-        $this->assertInstanceOf(ResourcesList::class, $namespaces);
+        $this->assertInstanceOf(ResourcesList::class, $allNamespaces);
 
-        foreach ($namespaces as $ns) {
-            $this->assertInstanceOf(K8sNamespace::class, $ns);
+        foreach ($allNamespaces as $allNamespace) {
+            $this->assertInstanceOf(K8sNamespace::class, $allNamespace);
 
-            $this->assertNotNull($ns->getName());
+            $this->assertNotNull($allNamespace->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $ns = $this->cluster->getNamespaceByName('production');
+        $k8sNamespace = $this->cluster->getNamespaceByName('production');
 
-        $this->assertInstanceOf(K8sNamespace::class, $ns);
+        $this->assertInstanceOf(K8sNamespace::class, $k8sNamespace);
 
-        $this->assertTrue($ns->isSynced());
+        $this->assertTrue($k8sNamespace->isSynced());
 
-        $this->assertEquals('production', $ns->getName());
+        $this->assertEquals('production', $k8sNamespace->getName());
 
         $this->assertEquals([
             'kubernetes.io/metadata.name' => 'production',
             'tier' => 'backend',
-        ], $ns->getLabels());
+        ], $k8sNamespace->getLabels());
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $ns = $this->cluster->namespace()
             ->setName('production')
@@ -97,25 +97,25 @@ class NamespaceTest extends TestCase
         $this->assertFalse($ns->isTerminating());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $ns = $this->cluster->getNamespaceByName('production');
+        $k8sNamespace = $this->cluster->getNamespaceByName('production');
 
-        $this->assertTrue($ns->isSynced());
+        $this->assertTrue($k8sNamespace->isSynced());
 
-        $ns->createOrUpdate();
+        $k8sNamespace->createOrUpdate();
 
-        $this->assertTrue($ns->isSynced());
+        $this->assertTrue($k8sNamespace->isSynced());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $ns = $this->cluster->getNamespaceByName('production');
+        $k8sNamespace = $this->cluster->getNamespaceByName('production');
 
-        $this->assertTrue($ns->delete());
+        $this->assertTrue($k8sNamespace->delete());
 
-        while ($ns->exists()) {
-            dump("Awaiting for namespace {$ns->getName()} to be deleted...");
+        while ($k8sNamespace->exists()) {
+            dump(sprintf('Awaiting for namespace %s to be deleted...', $k8sNamespace->getName()));
             sleep(1);
         }
 
@@ -124,7 +124,7 @@ class NamespaceTest extends TestCase
         $this->cluster->getNamespaceByName('production');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->namespace()->watchAll(function ($type, $namespace) {
             if ($namespace->getName() === 'production') {
@@ -135,11 +135,9 @@ class NamespaceTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->namespace()->watchByName('production', function ($type, $namespace) {
-            return $namespace->getName() === 'production';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->namespace()->watchByName('production', fn($type, $namespace): bool => $namespace->getName() === 'production', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

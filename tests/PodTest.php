@@ -11,7 +11,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class PodTest extends TestCase
 {
-    public function test_pod_build()
+    public function test_pod_build(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -27,7 +27,7 @@ class PodTest extends TestCase
             ->setImage('public.ecr.aws/docker/library/busybox')
             ->setCommand(['/bin/sh']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setOrUpdateLabels(['tier' => 'test'])
             ->setOrUpdateLabels(['tier' => 'backend', 'type' => 'test'])
@@ -37,31 +37,31 @@ class PodTest extends TestCase
             ->setInitContainers([$busybox])
             ->setContainers([$mysql]);
 
-        $this->assertEquals('v1', $pod->getApiVersion());
-        $this->assertEquals('mysql', $pod->getName());
-        $this->assertEquals(['tier' => 'backend', 'type' => 'test'], $pod->getLabels());
-        $this->assertEquals(['mysql/annotation' => 'yes', 'mongodb/annotation' => 'no'], $pod->getAnnotations());
-        $this->assertEquals([['name' => 'secret1'], ['name' => 'secret2']], $pod->getPulledSecrets());
-        $this->assertEquals([$busybox->toArray()], $pod->getInitContainers(false));
-        $this->assertEquals([$mysql->toArray()], $pod->getContainers(false));
+        $this->assertEquals('v1', $k8sPod->getApiVersion());
+        $this->assertEquals('mysql', $k8sPod->getName());
+        $this->assertEquals(['tier' => 'backend', 'type' => 'test'], $k8sPod->getLabels());
+        $this->assertEquals(['mysql/annotation' => 'yes', 'mongodb/annotation' => 'no'], $k8sPod->getAnnotations());
+        $this->assertEquals([['name' => 'secret1'], ['name' => 'secret2']], $k8sPod->getPulledSecrets());
+        $this->assertEquals([$busybox->toArray()], $k8sPod->getInitContainers(false));
+        $this->assertEquals([$mysql->toArray()], $k8sPod->getContainers(false));
 
-        $this->assertEquals('backend', $pod->getLabel('tier'));
-        $this->assertNull($pod->getLabel('inexistentLabel'));
+        $this->assertEquals('backend', $k8sPod->getLabel('tier'));
+        $this->assertNull($k8sPod->getLabel('inexistentLabel'));
 
-        $this->assertEquals('yes', $pod->getAnnotation('mysql/annotation'));
-        $this->assertEquals('no', $pod->getAnnotation('mongodb/annotation'));
-        $this->assertNull($pod->getAnnotation('inexistentAnnot'));
+        $this->assertEquals('yes', $k8sPod->getAnnotation('mysql/annotation'));
+        $this->assertEquals('no', $k8sPod->getAnnotation('mongodb/annotation'));
+        $this->assertNull($k8sPod->getAnnotation('inexistentAnnot'));
 
-        foreach ($pod->getInitContainers() as $container) {
+        foreach ($k8sPod->getInitContainers() as $container) {
             $this->assertInstanceOf(Container::class, $container);
         }
 
-        foreach ($pod->getContainers() as $container) {
+        foreach ($k8sPod->getContainers() as $container) {
             $this->assertInstanceOf(Container::class, $container);
         }
     }
 
-    public function test_pod_from_yaml()
+    public function test_pod_from_yaml(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -86,16 +86,16 @@ class PodTest extends TestCase
         $this->assertEquals([$busybox->toArray()], $pod->getInitContainers(false));
         $this->assertEquals([$mysql->toArray()], $pod->getContainers(false));
 
-        foreach ($pod->getInitContainers() as $container) {
-            $this->assertInstanceOf(Container::class, $container);
+        foreach ($pod->getInitContainers() as $initContainer) {
+            $this->assertInstanceOf(Container::class, $initContainer);
         }
 
-        foreach ($pod->getContainers() as $container) {
-            $this->assertInstanceOf(Container::class, $container);
+        foreach ($pod->getContainers() as $initContainer) {
+            $this->assertInstanceOf(Container::class, $initContainer);
         }
     }
 
-    public function test_pod_api_interaction()
+    public function test_pod_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -108,34 +108,32 @@ class PodTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function test_pod_exec()
+    public function test_pod_exec(): void
     {
         $busybox = K8s::container()
             ->setName('busybox-exec')
             ->setImage('public.ecr.aws/docker/library/busybox')
             ->setCommand(['/bin/sh', '-c', 'sleep 7200']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('busybox-exec')
             ->setContainers([$busybox])
             ->createOrUpdate();
 
-        while (! $pod->isRunning()) {
-            dump("Waiting for pod {$pod->getName()} to be up and running...");
+        while (! $k8sPod->isRunning()) {
+            dump(sprintf('Waiting for pod %s to be up and running...', $k8sPod->getName()));
             sleep(1);
-            $pod->refresh();
+            $k8sPod->refresh();
         }
 
-        $messages = $pod->exec(['/bin/sh', '-c', 'echo 1 && echo 2 && echo 3'], 'busybox-exec');
-        $desiredOutput = collect($messages)->where('channel', 'stdout')->reduce(function (?string $carry, array $message) {
-            return $carry .= preg_replace('/\s+/', '', $message['output']);
-        });
+        $messages = $k8sPod->exec(['/bin/sh', '-c', 'echo 1 && echo 2 && echo 3'], 'busybox-exec');
+        $desiredOutput = collect($messages)->where('channel', 'stdout')->reduce(fn(?string $carry, array $message) => $carry .= preg_replace('/\s+/', '', (string) $message['output']));
         $this->assertEquals('123', $desiredOutput);
 
-        $pod->delete();
+        $k8sPod->delete();
     }
 
-    public function test_pod_attach()
+    public function test_pod_attach(): void
     {
         $mysql = K8s::container()
             ->setName('mysql-attach')
@@ -145,28 +143,28 @@ class PodTest extends TestCase
             ])
             ->setEnv(['MYSQL_ROOT_PASSWORD' => 'test']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql-attach')
             ->setContainers([$mysql])
             ->createOrUpdate();
 
-        while (! $pod->isRunning()) {
-            dump("Waiting for pod {$pod->getName()} to be up and running...");
+        while (! $k8sPod->isRunning()) {
+            dump(sprintf('Waiting for pod %s to be up and running...', $k8sPod->getName()));
             sleep(1);
-            $pod->refresh();
+            $k8sPod->refresh();
         }
 
-        $pod->attach(function ($connection) use ($pod) {
-            $connection->on('message', function ($message) use ($connection) {
+        $k8sPod->attach(function ($connection) use ($k8sPod): void {
+            $connection->on('message', function ($message) use ($connection): void {
                 $this->assertTrue(true);
                 $connection->close();
             });
 
-            $pod->delete();
+            $k8sPod->delete();
         });
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -206,7 +204,7 @@ class PodTest extends TestCase
         $this->assertEquals(['mysql/annotation' => 'yes'], $pod->getAnnotations());
 
         while (! $pod->isRunning()) {
-            dump("Waiting for pod {$pod->getName()} to be up and running...");
+            dump(sprintf('Waiting for pod %s to be up and running...', $pod->getName()));
             sleep(1);
             $pod->refresh();
         }
@@ -225,63 +223,63 @@ class PodTest extends TestCase
         $this->assertEquals('BestEffort', $pod->getQos());
 
         $ipSlug = str_replace('.', '-', $pod->getPodIps()[0]['ip'] ?? '');
-        $this->assertEquals("{$ipSlug}.{$pod->getNamespace()}.pod.cluster.local", $pod->getClusterDns());
+        $this->assertEquals(sprintf('%s.%s.pod.cluster.local', $ipSlug, $pod->getNamespace()), $pod->getClusterDns());
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $pods = $this->cluster->getAllPods();
+        $allPods = $this->cluster->getAllPods();
 
-        $this->assertInstanceOf(ResourcesList::class, $pods);
+        $this->assertInstanceOf(ResourcesList::class, $allPods);
 
-        foreach ($pods as $pod) {
-            $this->assertInstanceOf(K8sPod::class, $pod);
+        foreach ($allPods as $allPod) {
+            $this->assertInstanceOf(K8sPod::class, $allPod);
 
-            $this->assertNotNull($pod->getName());
+            $this->assertNotNull($allPod->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $pod = $this->cluster->getPodByName('mysql');
+        $k8sPod = $this->cluster->getPodByName('mysql');
 
-        $this->assertInstanceOf(K8sPod::class, $pod);
+        $this->assertInstanceOf(K8sPod::class, $k8sPod);
 
-        $this->assertTrue($pod->isSynced());
+        $this->assertTrue($k8sPod->isSynced());
 
-        $this->assertEquals('v1', $pod->getApiVersion());
-        $this->assertEquals('mysql', $pod->getName());
-        $this->assertEquals(['tier' => 'backend'], $pod->getLabels());
-        $this->assertEquals(['mysql/annotation' => 'yes'], $pod->getAnnotations());
+        $this->assertEquals('v1', $k8sPod->getApiVersion());
+        $this->assertEquals('mysql', $k8sPod->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sPod->getLabels());
+        $this->assertEquals(['mysql/annotation' => 'yes'], $k8sPod->getAnnotations());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $pod = $this->cluster->getPodByName('mysql');
+        $k8sPod = $this->cluster->getPodByName('mysql');
 
-        $this->assertTrue($pod->isSynced());
+        $this->assertTrue($k8sPod->isSynced());
 
-        $pod->setLabels([])
+        $k8sPod->setLabels([])
             ->setAnnotations([]);
 
-        $pod->createOrUpdate();
+        $k8sPod->createOrUpdate();
 
-        $this->assertTrue($pod->isSynced());
+        $this->assertTrue($k8sPod->isSynced());
 
-        $this->assertEquals('v1', $pod->getApiVersion());
-        $this->assertEquals('mysql', $pod->getName());
-        $this->assertEquals([], $pod->getLabels());
-        $this->assertEquals([], $pod->getAnnotations());
+        $this->assertEquals('v1', $k8sPod->getApiVersion());
+        $this->assertEquals('mysql', $k8sPod->getName());
+        $this->assertEquals([], $k8sPod->getLabels());
+        $this->assertEquals([], $k8sPod->getAnnotations());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $pod = $this->cluster->getPodByName('mysql');
+        $k8sPod = $this->cluster->getPodByName('mysql');
 
-        $this->assertTrue($pod->delete());
+        $this->assertTrue($k8sPod->delete());
 
-        while ($pod->exists()) {
-            dump("Awaiting for pod {$pod->getName()} to be deleted...");
+        while ($k8sPod->exists()) {
+            dump(sprintf('Awaiting for pod %s to be deleted...', $k8sPod->getName()));
             sleep(1);
         }
 
@@ -290,7 +288,7 @@ class PodTest extends TestCase
         $this->cluster->getPodByName('mysql');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->pod()->watchAll(function ($type, $pod) {
             if ($pod->getName() === 'mysql') {
@@ -301,16 +299,14 @@ class PodTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->pod()->watchByName('mysql', function ($type, $pod) {
-            return $pod->getName() === 'mysql';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->pod()->watchByName('mysql', fn($type, $pod): bool => $pod->getName() === 'mysql', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }
 
-    public function runWatchLogsTests()
+    public function runWatchLogsTests(): void
     {
         $this->cluster->pod()->watchContainerLogsByName('mysql', 'mysql', function ($data) {
             // Debugging data to CI. :D
@@ -322,13 +318,13 @@ class PodTest extends TestCase
         });
     }
 
-    public function runGetLogsTests()
+    public function runGetLogsTests(): void
     {
         $logs = $this->cluster->pod()->containerLogsByName('mysql', 'mysql');
 
         // Debugging data to CI. :D
         dump($logs);
 
-        $this->assertTrue(strlen($logs) > 0);
+        $this->assertTrue((string) $logs !== '');
     }
 }

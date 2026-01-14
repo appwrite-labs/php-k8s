@@ -11,12 +11,13 @@ use RenokiCo\PhpK8s\KubernetesCluster;
 
 class KubeConfigTest extends TestCase
 {
-    private $tempFolder;
+    private string $tempFolder;
 
     /**
      * {@inheritdoc}
      */
-    public function setUp(): void
+    #[\Override]
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -27,22 +28,23 @@ class KubeConfigTest extends TestCase
     /**
      * {@inheritDoc}
      */
-    public function tearDown(): void
+    #[\Override]
+    protected function tearDown(): void
     {
         parent::tearDown();
 
         unset($_SERVER['KUBECONFIG']);
     }
 
-    public function test_kube_config_from_yaml_file_with_base64_encoded_ssl()
+    public function test_kube_config_from_yaml_file_with_base64_encoded_ssl(): void
     {
-        $cluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube');
+        $kubernetesCluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube');
 
         [
             'verify' => $caPath,
             'cert' => $certPath,
             'ssl_key' => $keyPath,
-        ] = $cluster->getClient()->getConfig();
+        ] = $kubernetesCluster->getClient()->getConfig();
 
         $tempFilePath = $this->tempFolder.DIRECTORY_SEPARATOR.'ctx-minikube-minikube-httpsminikube8443-';
 
@@ -55,44 +57,43 @@ class KubeConfigTest extends TestCase
         $this->assertEquals("some-key\n", file_get_contents($keyPath));
     }
 
-    public function test_kube_config_from_yaml_file_with_paths_to_ssl()
+    public function test_kube_config_from_yaml_file_with_paths_to_ssl(): void
     {
-        $cluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube-2');
+        $kubernetesCluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube-2');
 
         [
             'verify' => $caPath,
             'cert' => $certPath,
             'ssl_key' => $keyPath,
-        ] = $cluster->getClient()->getConfig();
+        ] = $kubernetesCluster->getClient()->getConfig();
 
         $this->assertEquals('/path/to/.minikube/ca.crt', $caPath);
         $this->assertEquals('/path/to/.minikube/client.crt', $certPath);
         $this->assertEquals('/path/to/.minikube/client.key', $keyPath);
     }
 
-    public function test_kube_config_from_yaml_file_with_skip_tols()
+    public function test_kube_config_from_yaml_file_with_skip_tols(): void
     {
-        $cluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube-skip-tls');
+        $kubernetesCluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube-skip-tls');
 
         [
             'verify' => $verify,
             'cert' => $certPath,
             'ssl_key' => $keyPath,
-        ] = $cluster->getClient()->getConfig();
+        ] = $kubernetesCluster->getClient()->getConfig();
 
         $this->assertFalse($verify);
         $this->assertEquals('/path/to/.minikube/client3.crt', $certPath);
         $this->assertEquals('/path/to/.minikube/client3.key', $keyPath);
     }
 
-    public function test_cluster_can_get_correct_config_for_token_socket_connection()
+    public function test_cluster_can_get_correct_config_for_token_socket_connection(): void
     {
-        $cluster = KubernetesCluster::fromUrl('http://127.0.0.1:8080')->loadTokenFromFile(__DIR__.'/cluster/token.txt');
+        $kubernetesCluster = KubernetesCluster::fromUrl('http://127.0.0.1:8080')->loadTokenFromFile(__DIR__.'/cluster/token.txt');
 
-        $reflectionMethod = new \ReflectionMethod($cluster, 'buildStreamContextOptions');
-        $reflectionMethod->setAccessible(true);
+        $reflectionMethod = new \ReflectionMethod($kubernetesCluster, 'buildStreamContextOptions');
 
-        $options = $reflectionMethod->invoke($cluster);
+        $options = $reflectionMethod->invoke($kubernetesCluster);
 
         $this->assertEquals([
             'http' => [
@@ -105,14 +106,13 @@ class KubeConfigTest extends TestCase
         ], $options);
     }
 
-    public function test_cluster_can_get_correct_config_for_user_pass_socket_connection()
+    public function test_cluster_can_get_correct_config_for_user_pass_socket_connection(): void
     {
-        $cluster = KubernetesCluster::fromUrl('http://127.0.0.1:8080')->httpAuthentication('some-user', 'some-password');
+        $kubernetesCluster = KubernetesCluster::fromUrl('http://127.0.0.1:8080')->httpAuthentication('some-user', 'some-password');
 
-        $reflectionMethod = new \ReflectionMethod($cluster, 'buildStreamContextOptions');
-        $reflectionMethod->setAccessible(true);
+        $reflectionMethod = new \ReflectionMethod($kubernetesCluster, 'buildStreamContextOptions');
 
-        $options = $reflectionMethod->invoke($cluster);
+        $options = $reflectionMethod->invoke($kubernetesCluster);
 
         $this->assertEquals([
             'http' => [
@@ -125,14 +125,13 @@ class KubeConfigTest extends TestCase
         ], $options);
     }
 
-    public function test_cluster_can_get_correct_config_for_ssl_socket_connection()
+    public function test_cluster_can_get_correct_config_for_ssl_socket_connection(): void
     {
-        $cluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube-2');
+        $kubernetesCluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube-2');
 
-        $reflectionMethod = new \ReflectionMethod($cluster, 'buildStreamContextOptions');
-        $reflectionMethod->setAccessible(true);
+        $reflectionMethod = new \ReflectionMethod($kubernetesCluster, 'buildStreamContextOptions');
 
-        $options = $reflectionMethod->invoke($cluster);
+        $options = $reflectionMethod->invoke($kubernetesCluster);
 
         $this->assertEquals([
             'http' => [
@@ -146,60 +145,60 @@ class KubeConfigTest extends TestCase
         ], $options);
     }
 
-    public function test_kube_config_from_yaml_cannot_load_if_no_cluster()
+    public function test_kube_config_from_yaml_cannot_load_if_no_cluster(): void
     {
         $this->expectException(KubeConfigClusterNotFound::class);
 
         KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube-without-cluster');
     }
 
-    public function test_kube_config_from_yaml_cannot_load_if_no_user()
+    public function test_kube_config_from_yaml_cannot_load_if_no_user(): void
     {
         $this->expectException(KubeConfigUserNotFound::class);
 
-        $cluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube-without-user');
+        KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube-without-user');
     }
 
-    public function test_kube_config_from_yaml_cannot_load_if_wrong_context()
+    public function test_kube_config_from_yaml_cannot_load_if_wrong_context(): void
     {
         $this->expectException(KubeConfigContextNotFound::class);
 
         KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'inexistent-context');
     }
 
-    public function test_kube_config_from_yaml_invalid_base64_ca()
+    public function test_kube_config_from_yaml_invalid_base64_ca(): void
     {
         $this->expectException(KubeConfigBaseEncodedDataInvalid::class);
 
         KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig.yaml', 'minikube-invalid-base64-ca');
     }
 
-    public function test_http_authentication()
+    public function test_http_authentication(): void
     {
-        $cluster = KubernetesCluster::fromUrl('http://127.0.0.1:8080')->httpAuthentication('some-user', 'some-password');
+        $kubernetesCluster = KubernetesCluster::fromUrl('http://127.0.0.1:8080')->httpAuthentication('some-user', 'some-password');
 
-        ['auth' => $auth] = $cluster->getClient()->getConfig();
+        ['auth' => $auth] = $kubernetesCluster->getClient()->getConfig();
 
         $this->assertEquals(['some-user', 'some-password'], $auth);
     }
 
-    public function test_bearer_token_authentication()
+    public function test_bearer_token_authentication(): void
     {
-        $cluster = KubernetesCluster::fromUrl('http://127.0.0.1:8080')->loadTokenFromFile(__DIR__.'/cluster/token.txt');
+        $kubernetesCluster = KubernetesCluster::fromUrl('http://127.0.0.1:8080')->loadTokenFromFile(__DIR__.'/cluster/token.txt');
 
-        ['headers' => ['authorization' => $token]] = $cluster->getClient()->getConfig();
+        ['headers' => ['authorization' => $token]] = $kubernetesCluster->getClient()->getConfig();
 
         $this->assertEquals('Bearer some-token', $token);
     }
 
-    public function test_in_cluster_config()
+    public function test_in_cluster_config(): void
     {
-        $cluster = KubernetesCluster::inClusterConfiguration();
+        $kubernetesCluster = KubernetesCluster::inClusterConfiguration();
 
         [
             'headers' => ['authorization' => $token],
             'verify' => $caPath,
-        ] = $cluster->getClient()->getConfig();
+        ] = $kubernetesCluster->getClient()->getConfig();
 
         $this->assertEquals('Bearer some-token', $token);
         $this->assertEquals('/var/run/secrets/kubernetes.io/serviceaccount/ca.crt', $caPath);
@@ -211,15 +210,18 @@ class KubeConfigTest extends TestCase
     /**
      * @dataProvider environmentVariableContextProvider
      */
-    public function test_from_environment_variable(string $context = null, string $expectedDomain)
+    public function test_from_environment_variable(?string $context = null, string $expectedDomain = ''): void
     {
         $_SERVER['KUBECONFIG'] = __DIR__.'/cluster/kubeconfig.yaml::'.__DIR__.'/cluster/kubeconfig-2.yaml';
 
-        $cluster = KubernetesCluster::fromKubeConfigVariable($context);
+        $kubernetesCluster = KubernetesCluster::fromKubeConfigVariable($context);
 
-        $this->assertSame("https://{$expectedDomain}:8443/?", $cluster->getCallableUrl('/', []));
+        $this->assertSame(sprintf('https://%s:8443/?', $expectedDomain), $kubernetesCluster->getCallableUrl('/', []));
     }
 
+    /**
+     * @return \Iterator<(array<int, null> | array<int, string>)>
+     */
     public function environmentVariableContextProvider(): iterable
     {
         yield [null, 'minikube'];
@@ -227,35 +229,35 @@ class KubeConfigTest extends TestCase
         yield ['minikube-3', 'minikube-3'];
     }
 
-    public function test_kube_config_from_array_with_base64_encoded_ssl()
+    public function test_kube_config_from_array_with_base64_encoded_ssl(): void
     {
-        $cluster = KubernetesCluster::fromKubeConfigArray(yaml_parse_file(__DIR__.'/cluster/kubeconfig.yaml'), 'minikube');
+        $kubernetesCluster = KubernetesCluster::fromKubeConfigArray(yaml_parse_file(__DIR__.'/cluster/kubeconfig.yaml'), 'minikube');
 
         [
             'verify' => $caPath,
             'cert' => $certPath,
             'ssl_key' => $keyPath,
-        ] = $cluster->getClient()->getConfig();
+        ] = $kubernetesCluster->getClient()->getConfig();
 
         $this->assertEquals("some-ca\n", file_get_contents($caPath));
         $this->assertEquals("some-cert\n", file_get_contents($certPath));
         $this->assertEquals("some-key\n", file_get_contents($keyPath));
     }
 
-    public function test_kube_config_from_yaml_file_with_cmd_auth_as_json()
+    public function test_kube_config_from_yaml_file_with_cmd_auth_as_json(): void
     {
-        $cluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig-command.yaml', 'minikube');
+        $kubernetesCluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig-command.yaml', 'minikube');
 
-        ['headers' => ['authorization' => $token]] = $cluster->getClient()->getConfig();
+        ['headers' => ['authorization' => $token]] = $kubernetesCluster->getClient()->getConfig();
 
         $this->assertEquals('Bearer some-token', $token);
     }
 
-    public function test_kube_config_from_yaml_file_with_cmd_auth_as_string()
+    public function test_kube_config_from_yaml_file_with_cmd_auth_as_string(): void
     {
-        $cluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig-command.yaml', 'minikube-2');
+        $kubernetesCluster = KubernetesCluster::fromKubeConfigYamlFile(__DIR__.'/cluster/kubeconfig-command.yaml', 'minikube-2');
 
-        ['headers' => ['authorization' => $token]] = $cluster->getClient()->getConfig();
+        ['headers' => ['authorization' => $token]] = $kubernetesCluster->getClient()->getConfig();
 
         $this->assertEquals('Bearer some-token', $token);
     }

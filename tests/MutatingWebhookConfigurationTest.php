@@ -10,7 +10,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class MutatingWebhookConfigurationTest extends TestCase
 {
-    public function test_mutation_webhook_build()
+    public function test_mutation_webhook_build(): void
     {
         $webhook = K8s::webhook()
             ->setName('v1.webhook.com')
@@ -26,20 +26,20 @@ class MutatingWebhookConfigurationTest extends TestCase
             ->setSideEffects('None')
             ->setTimeoutSeconds(5);
 
-        $mutatingWebhookConfiguration = $this->cluster->mutatingWebhookConfiguration()
+        $k8sMutatingWebhookConfiguration = $this->cluster->mutatingWebhookConfiguration()
             ->setName('ingress-mutation-webhook')
             ->setLabels(['tier' => 'webhook'])
             ->setAnnotations(['webhook/annotation' => 'yes'])
             ->setWebhooks([$webhook]);
 
-        $this->assertEquals('admissionregistration.k8s.io/v1', $mutatingWebhookConfiguration->getApiVersion());
-        $this->assertEquals('ingress-mutation-webhook', $mutatingWebhookConfiguration->getName());
-        $this->assertEquals(['tier' => 'webhook'], $mutatingWebhookConfiguration->getLabels());
-        $this->assertEquals(['webhook/annotation' => 'yes'], $mutatingWebhookConfiguration->getAnnotations());
-        $this->assertInstanceOf(K8sMutatingWebhookConfiguration::class, $mutatingWebhookConfiguration);
+        $this->assertEquals('admissionregistration.k8s.io/v1', $k8sMutatingWebhookConfiguration->getApiVersion());
+        $this->assertEquals('ingress-mutation-webhook', $k8sMutatingWebhookConfiguration->getName());
+        $this->assertEquals(['tier' => 'webhook'], $k8sMutatingWebhookConfiguration->getLabels());
+        $this->assertEquals(['webhook/annotation' => 'yes'], $k8sMutatingWebhookConfiguration->getAnnotations());
+        $this->assertInstanceOf(K8sMutatingWebhookConfiguration::class, $k8sMutatingWebhookConfiguration);
     }
 
-    public function test_mutation_webhook_from_yaml()
+    public function test_mutation_webhook_from_yaml(): void
     {
         $mutatingWebhookConfiguration = $this->cluster->fromYamlFile(__DIR__.'/yaml/mutatingwebhookconfiguration.yaml');
 
@@ -49,7 +49,7 @@ class MutatingWebhookConfigurationTest extends TestCase
         $this->assertEquals(['webhook/annotation' => 'yes'], $mutatingWebhookConfiguration->getAnnotations());
     }
 
-    public function test_mutation_webhook_api_interaction()
+    public function test_mutation_webhook_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -60,7 +60,7 @@ class MutatingWebhookConfigurationTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $webhook = K8s::webhook()
             ->setName('v1.webhook.com')
@@ -112,67 +112,67 @@ class MutatingWebhookConfigurationTest extends TestCase
         }
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $mutatingWebhookConfigurations = $this->cluster->getAllMutatingWebhookConfiguration();
-        $this->assertInstanceOf(ResourcesList::class, $mutatingWebhookConfigurations);
+        $allMutatingWebhookConfiguration = $this->cluster->getAllMutatingWebhookConfiguration();
+        $this->assertInstanceOf(ResourcesList::class, $allMutatingWebhookConfiguration);
 
-        foreach ($mutatingWebhookConfigurations as $mutatingWebhookConfiguration) {
+        foreach ($allMutatingWebhookConfiguration as $mutatingWebhookConfiguration) {
             $this->assertInstanceOf(K8sMutatingWebhookConfiguration::class, $mutatingWebhookConfiguration);
 
             $this->assertNotNull($mutatingWebhookConfiguration->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $mutatingWebhookConfiguration = $this->cluster->getMutatingWebhookConfigurationByName('ingress-mutation-webhook');
+        $k8sMutatingWebhookConfiguration = $this->cluster->getMutatingWebhookConfigurationByName('ingress-mutation-webhook');
 
-        $this->assertInstanceOf(K8sMutatingWebhookConfiguration::class, $mutatingWebhookConfiguration);
+        $this->assertInstanceOf(K8sMutatingWebhookConfiguration::class, $k8sMutatingWebhookConfiguration);
 
-        $this->assertTrue($mutatingWebhookConfiguration->isSynced());
+        $this->assertTrue($k8sMutatingWebhookConfiguration->isSynced());
 
-        $this->assertEquals('admissionregistration.k8s.io/v1', $mutatingWebhookConfiguration->getApiVersion());
-        $this->assertEquals('ingress-mutation-webhook', $mutatingWebhookConfiguration->getName());
-        $this->assertEquals(['tier' => 'webhook'], $mutatingWebhookConfiguration->getLabels());
-        $this->assertArrayHasKey('webhook/annotation', $mutatingWebhookConfiguration->getAnnotations());
-        $this->assertEquals(1, count($mutatingWebhookConfiguration->getWebhooks()));
+        $this->assertEquals('admissionregistration.k8s.io/v1', $k8sMutatingWebhookConfiguration->getApiVersion());
+        $this->assertEquals('ingress-mutation-webhook', $k8sMutatingWebhookConfiguration->getName());
+        $this->assertEquals(['tier' => 'webhook'], $k8sMutatingWebhookConfiguration->getLabels());
+        $this->assertArrayHasKey('webhook/annotation', $k8sMutatingWebhookConfiguration->getAnnotations());
+        $this->assertEquals(1, count($k8sMutatingWebhookConfiguration->getWebhooks()));
 
-        foreach ($mutatingWebhookConfiguration->getWebhooks() as $mw) {
+        foreach ($k8sMutatingWebhookConfiguration->getWebhooks() as $mw) {
             $this->assertInstanceOf(Webhook::class, $mw);
         }
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $mutatingWebhookConfiguration = $this->cluster->getMutatingWebhookConfigurationByName('ingress-mutation-webhook');
+        $k8sMutatingWebhookConfiguration = $this->cluster->getMutatingWebhookConfigurationByName('ingress-mutation-webhook');
 
-        $this->assertTrue($mutatingWebhookConfiguration->isSynced());
+        $this->assertTrue($k8sMutatingWebhookConfiguration->isSynced());
 
-        $mutatingWebhookConfiguration->setAnnotations([]);
+        $k8sMutatingWebhookConfiguration->setAnnotations([]);
 
-        $mutatingWebhookConfiguration->createOrUpdate();
+        $k8sMutatingWebhookConfiguration->createOrUpdate();
 
-        $this->assertTrue($mutatingWebhookConfiguration->isSynced());
+        $this->assertTrue($k8sMutatingWebhookConfiguration->isSynced());
 
-        $this->assertEquals('admissionregistration.k8s.io/v1', $mutatingWebhookConfiguration->getApiVersion());
-        $this->assertEquals('ingress-mutation-webhook', $mutatingWebhookConfiguration->getName());
-        $this->assertEquals(['tier' => 'webhook'], $mutatingWebhookConfiguration->getLabels());
-        $this->assertEquals([], $mutatingWebhookConfiguration->getAnnotations());
+        $this->assertEquals('admissionregistration.k8s.io/v1', $k8sMutatingWebhookConfiguration->getApiVersion());
+        $this->assertEquals('ingress-mutation-webhook', $k8sMutatingWebhookConfiguration->getName());
+        $this->assertEquals(['tier' => 'webhook'], $k8sMutatingWebhookConfiguration->getLabels());
+        $this->assertEquals([], $k8sMutatingWebhookConfiguration->getAnnotations());
 
-        foreach ($mutatingWebhookConfiguration->getWebhooks() as $mw) {
+        foreach ($k8sMutatingWebhookConfiguration->getWebhooks() as $mw) {
             $this->assertInstanceOf(Webhook::class, $mw);
         }
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $mutatingWebhookConfiguration = $this->cluster->getMutatingWebhookConfigurationByName('ingress-mutation-webhook');
+        $k8sMutatingWebhookConfiguration = $this->cluster->getMutatingWebhookConfigurationByName('ingress-mutation-webhook');
 
-        $this->assertTrue($mutatingWebhookConfiguration->delete());
+        $this->assertTrue($k8sMutatingWebhookConfiguration->delete());
 
-        while ($mutatingWebhookConfiguration->exists()) {
-            dump("Awaiting for mutation webhook configuration {$mutatingWebhookConfiguration->getName()} to be deleted...");
+        while ($k8sMutatingWebhookConfiguration->exists()) {
+            dump(sprintf('Awaiting for mutation webhook configuration %s to be deleted...', $k8sMutatingWebhookConfiguration->getName()));
             sleep(1);
         }
 
@@ -181,7 +181,7 @@ class MutatingWebhookConfigurationTest extends TestCase
         $this->cluster->getMutatingWebhookConfigurationByName('ingress-mutation-webhook');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->mutatingWebhookConfiguration()->watchAll(function ($type, $mutatingWebhookConfiguration) {
             if ($mutatingWebhookConfiguration->getName() === 'ingress-mutation-webhook') {
@@ -192,11 +192,9 @@ class MutatingWebhookConfigurationTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->mutatingWebhookConfiguration()->watchByName('ingress-mutation-webhook', function ($type, $mutatingWebhookConfiguration) {
-            return $mutatingWebhookConfiguration->getName() === 'ingress-mutation-webhook';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->mutatingWebhookConfiguration()->watchByName('ingress-mutation-webhook', fn($type, $mutatingWebhookConfiguration): bool => $mutatingWebhookConfiguration->getName() === 'ingress-mutation-webhook', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

@@ -8,37 +8,29 @@ use RenokiCo\PhpK8s\Kinds\K8sPod;
 
 class MacroTest extends TestCase
 {
-    public function test_instances_macro()
+    public function test_instances_macro(): void
     {
-        Container::macro('macroTest', function ($var1, $var2) {
-            return $this->setMacroField([$var1, $var2]);
-        });
+        Container::macro('macroTest', fn($var1, $var2) => $this->setMacroField([$var1, $var2]));
 
-        Container::macro('getMacroTest', function () {
-            return $this->getMacroField([]);
-        });
+        Container::macro('getMacroTest', fn() => $this->getMacroField([]));
 
         $container = K8s::container()->macroTest('val1', 'val2');
 
         $this->assertEquals(['val1', 'val2'], $container->getMacroTest());
     }
 
-    public function test_resource_macro()
+    public function test_resource_macro(): void
     {
-        K8sPod::macro('macroTest', function ($var1, $var2) {
-            return $this->setMacroField([$var1, $var2]);
-        });
+        K8sPod::macro('macroTest', fn($var1, $var2) => $this->setMacroField([$var1, $var2]));
 
-        K8sPod::macro('getMacroTest', function () {
-            return $this->getMacroField([]);
-        });
+        K8sPod::macro('getMacroTest', fn() => $this->getMacroField([]));
 
         $pod = K8s::pod()->macroTest('val1', 'val2');
 
         $this->assertEquals(['val1', 'val2'], $pod->getMacroTest());
     }
 
-    public function test_k8s_macro()
+    public function test_k8s_macro(): void
     {
         Kinds\NewResource::register();
         Kinds\NewResource::register('nr');

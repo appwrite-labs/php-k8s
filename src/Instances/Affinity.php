@@ -7,9 +7,6 @@ class Affinity extends Instance
     /**
      * Add a preference affinity.
      *
-     * @param  array  $expressions
-     * @param  array  $fieldsExpressions
-     * @param  int  $weight
      * @return $this
      */
     public function addPreference(array $expressions, array $fieldsExpressions, int $weight = 1)
@@ -20,9 +17,9 @@ class Affinity extends Instance
             }
         }
 
-        foreach ($fieldsExpressions as &$expression) {
-            if ($expression instanceof Expression) {
-                $expression = $expression->toArray();
+        foreach ($fieldsExpressions as &$fieldExpression) {
+            if ($fieldExpression instanceof Expression) {
+                $fieldExpression = $fieldExpression->toArray();
             }
         }
 
@@ -30,7 +27,7 @@ class Affinity extends Instance
             'matchExpressions' => $expressions,
         ];
 
-        if ($fieldsExpressions) {
+        if ($fieldsExpressions !== []) {
             $preference['matchFields'] = $fieldsExpressions;
         }
 
@@ -43,9 +40,6 @@ class Affinity extends Instance
     /**
      * Add a preference affinity for nodeSelector.
      *
-     * @param  array  $expressions
-     * @param  array  $fieldsExpressions
-     * @param  int  $weight
      * @return $this
      */
     public function addNodeSelectorPreference(array $expressions, array $fieldsExpressions, int $weight = 1)
@@ -56,9 +50,9 @@ class Affinity extends Instance
             }
         }
 
-        foreach ($fieldsExpressions as &$expression) {
-            if ($expression instanceof Expression) {
-                $expression = $expression->toArray();
+        foreach ($fieldsExpressions as &$fieldExpression) {
+            if ($fieldExpression instanceof Expression) {
+                $fieldExpression = $fieldExpression->toArray();
             }
         }
 
@@ -66,7 +60,7 @@ class Affinity extends Instance
             'matchExpressions' => $expressions,
         ];
 
-        if ($fieldsExpressions) {
+        if ($fieldsExpressions !== []) {
             $preference['matchFields'] = $fieldsExpressions;
         }
 
@@ -79,8 +73,6 @@ class Affinity extends Instance
     /**
      * Add a required affinity for nodeSelector.
      *
-     * @param  array  $expressions
-     * @param  array  $fieldsExpressions
      * @return $this
      */
     public function addNodeRequirement(array $expressions, array $fieldsExpressions)
@@ -91,9 +83,9 @@ class Affinity extends Instance
             }
         }
 
-        foreach ($fieldsExpressions as &$expression) {
-            if ($expression instanceof Expression) {
-                $expression = $expression->toArray();
+        foreach ($fieldsExpressions as &$fieldExpression) {
+            if ($fieldExpression instanceof Expression) {
+                $fieldExpression = $fieldExpression->toArray();
             }
         }
 
@@ -101,7 +93,7 @@ class Affinity extends Instance
             'matchExpressions' => $expressions,
         ];
 
-        if ($fieldsExpressions) {
+        if ($fieldsExpressions !== []) {
             $requirement['matchFields'] = $fieldsExpressions;
         }
 
@@ -111,9 +103,6 @@ class Affinity extends Instance
     /**
      * Add a required affinity for nodeSelector.
      *
-     * @param  array  $expressions
-     * @param  array  $fieldsExpressions
-     * @param  string  $topologyKey
      * @return $this
      */
     public function addLabelSelectorRequirement(array $expressions, array $fieldsExpressions, string $topologyKey)
@@ -124,9 +113,9 @@ class Affinity extends Instance
             }
         }
 
-        foreach ($fieldsExpressions as &$expression) {
-            if ($expression instanceof Expression) {
-                $expression = $expression->toArray();
+        foreach ($fieldsExpressions as &$fieldExpression) {
+            if ($fieldExpression instanceof Expression) {
+                $fieldExpression = $fieldExpression->toArray();
             }
         }
 
@@ -134,7 +123,7 @@ class Affinity extends Instance
             'matchExpressions' => $expressions,
         ];
 
-        if ($fieldsExpressions) {
+        if ($fieldsExpressions !== []) {
             $requirement['matchFields'] = $fieldsExpressions;
         }
 

@@ -155,22 +155,27 @@ class KubernetesCluster
     ];
 
     const GET_OP = 'get';
+
     const CREATE_OP = 'create';
+
     const REPLACE_OP = 'replace';
+
     const DELETE_OP = 'delete';
+
     const LOG_OP = 'logs';
+
     const WATCH_OP = 'watch';
+
     const WATCH_LOGS_OP = 'watch_logs';
+
     const EXEC_OP = 'exec';
+
     const ATTACH_OP = 'attach';
 
     /**
      * Create a new class instance.
-     *
-     * @param  string|null  $url
-     * @return void
      */
-    public function __construct(string $url = null)
+    public function __construct(?string $url = null)
     {
         $this->url = $url;
     }
@@ -178,10 +183,9 @@ class KubernetesCluster
     /**
      * Set the K8s resource class.
      *
-     * @param  string  $resourceClass
      * @return $this
      */
-    public function setResourceClass(string $resourceClass)
+    public function setResourceClass(string $resourceClass): static
     {
         $this->resourceClass = $resourceClass;
 
@@ -191,10 +195,7 @@ class KubernetesCluster
     /**
      * Run a specific operation for the API path with a specific payload.
      *
-     * @param  string  $operation
-     * @param  string  $path
      * @param  string|null|Closure  $payload
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -203,13 +204,9 @@ class KubernetesCluster
     {
         switch ($operation) {
             case static::WATCH_OP: return $this->watchPath($path, $payload, $query);
-                break;
             case static::WATCH_LOGS_OP: return $this->watchLogsPath($path, $payload, $query);
-                break;
             case static::EXEC_OP: return $this->execPath($path, $query);
-                break;
             case static::ATTACH_OP: return $this->attachPath($path, $payload, $query);
-                break;
             default: break;
         }
 
@@ -219,9 +216,6 @@ class KubernetesCluster
     /**
      * Watch for the current resource or a resource list.
      *
-     * @param  string  $path
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return bool
      */
     protected function watchPath(string $path, Closure $callback, array $query = ['pretty' => 1])
@@ -254,9 +248,6 @@ class KubernetesCluster
     /**
      * Watch for the logs for the resource.
      *
-     * @param  string  $path
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return bool
      */
     protected function watchLogsPath(string $path, Closure $callback, array $query = ['pretty' => 1])
@@ -290,8 +281,6 @@ class KubernetesCluster
     /**
      * Call exec on the resource.
      *
-     * @param  string  $path
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -302,8 +291,8 @@ class KubernetesCluster
     ) {
         try {
             return $this->makeRequest(static::EXEC_OP, $path, '', $query);
-        } catch (KubernetesAPIException $e) {
-            $payload = $e->getPayload();
+        } catch (KubernetesAPIException $kubernetesapiException) {
+            $payload = $kubernetesapiException->getPayload();
 
             // Check of the request needs upgrade and make a call to WS if needed.
             if (
@@ -314,16 +303,13 @@ class KubernetesCluster
                 return $this->makeWsRequest($path, null, $query);
             }
 
-            throw $e;
+            throw $kubernetesapiException;
         }
     }
 
     /**
      * Call attach on the resource.
      *
-     * @param  string  $path
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -335,8 +321,8 @@ class KubernetesCluster
     ) {
         try {
             return $this->makeRequest(static::ATTACH_OP, $path, '', $query);
-        } catch (KubernetesAPIException $e) {
-            $payload = $e->getPayload();
+        } catch (KubernetesAPIException $kubernetesapiException) {
+            $payload = $kubernetesapiException->getPayload();
 
             // Check of the request needs upgrade and make a call to WS if needed.
             if (
@@ -347,18 +333,17 @@ class KubernetesCluster
                 return $this->makeWsRequest($path, $callback, $query);
             }
 
-            throw $e;
+            throw $kubernetesapiException;
         }
     }
 
     /**
      * Proxy the custom method to the K8s class.
      *
-     * @param  string  $method
-     * @param  array  $parameters
+     * @param array<int, mixed> $parameters
      * @return mixed
      */
-    public function __call($method, $parameters)
+    public function __call(string $method, array $parameters)
     {
         // Proxy the ->get[Resource]ByName($name, $namespace = 'default')
         // For example, ->getConfigMapByName('settings')

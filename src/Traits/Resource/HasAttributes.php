@@ -38,7 +38,6 @@ trait HasAttributes
     /**
      * Set an attribute.
      *
-     * @param  string  $name
      * @param  mixed  $value
      * @return $this
      */
@@ -52,7 +51,6 @@ trait HasAttributes
     /**
      * For an array attribute, append a new element to the list.
      *
-     * @param  string  $name
      * @param  mixed  $value
      * @return $this
      */
@@ -70,7 +68,6 @@ trait HasAttributes
     /**
      * Remove an attribute.
      *
-     * @param  string  $name
      * @return $this
      */
     public function removeAttribute(string $name)
@@ -83,7 +80,6 @@ trait HasAttributes
     /**
      * Get a specific attribute.
      *
-     * @param  string  $name
      * @param  mixed  $default
      * @return mixed
      */
@@ -94,11 +90,8 @@ trait HasAttributes
 
     /**
      * Check if the given instance is the same as this one.
-     *
-     * @param  self  $instance
-     * @return bool
      */
-    public function is(self $instance)
+    public function is(self $instance): bool
     {
         return $instance->toJson() === $this->toJson();
     }
@@ -118,8 +111,6 @@ trait HasAttributes
 
     /**
      * Check if the resource is synced.
-     *
-     * @return bool
      */
     public function isSynced(): bool
     {
@@ -129,8 +120,6 @@ trait HasAttributes
     /**
      * Check if the resource changed from
      * its initial state.
-     *
-     * @return bool
      */
     public function hasChanged(): bool
     {
@@ -140,7 +129,6 @@ trait HasAttributes
     /**
      * Hydrate the current resource with a payload.
      *
-     * @param  array  $attributes
      * @return $this
      */
     public function syncWith(array $attributes = [])
@@ -155,7 +143,6 @@ trait HasAttributes
     /**
      * Hydrate the current original details with a payload.
      *
-     * @param  array  $attributes
      * @return $this
      */
     public function syncOriginalWith(array $attributes = [])
@@ -171,10 +158,10 @@ trait HasAttributes
      * Proxy the attributes call to the current object.
      *
      * @param  string  $method
-     * @param  array  $parameters
+     * @param array<int, mixed> $parameters
      * @return mixed
      */
-    public function __call($method, $parameters)
+    public function __call($method, array $parameters)
     {
         if (static::hasMacro($method)) {
             return $this->macroCall($method, $parameters);

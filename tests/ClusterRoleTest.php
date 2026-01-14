@@ -10,7 +10,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class ClusterRoleTest extends TestCase
 {
-    public function test_cluster_role_build()
+    public function test_cluster_role_build(): void
     {
         $rule = K8s::rule()
             ->core()
@@ -18,18 +18,18 @@ class ClusterRoleTest extends TestCase
             ->addResourceNames(['pod-name', 'configmap-name'])
             ->addVerbs(['get', 'list', 'watch']);
 
-        $cr = $this->cluster->clusterRole()
+        $k8sClusterRole = $this->cluster->clusterRole()
             ->setName('admin-cr')
             ->setLabels(['tier' => 'backend'])
             ->addRules([$rule]);
 
-        $this->assertEquals('rbac.authorization.k8s.io/v1', $cr->getApiVersion());
-        $this->assertEquals('admin-cr', $cr->getName());
-        $this->assertEquals(['tier' => 'backend'], $cr->getLabels());
-        $this->assertEquals([$rule], $cr->getRules());
+        $this->assertEquals('rbac.authorization.k8s.io/v1', $k8sClusterRole->getApiVersion());
+        $this->assertEquals('admin-cr', $k8sClusterRole->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sClusterRole->getLabels());
+        $this->assertEquals([$rule], $k8sClusterRole->getRules());
     }
 
-    public function test_cluster_role_from_yaml()
+    public function test_cluster_role_from_yaml(): void
     {
         $rule = K8s::rule()
             ->core()
@@ -44,7 +44,7 @@ class ClusterRoleTest extends TestCase
         $this->assertEquals([$rule], $cr->getRules());
     }
 
-    public function test_cluster_role_api_interaction()
+    public function test_cluster_role_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -55,7 +55,7 @@ class ClusterRoleTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $rule = K8s::rule()
             ->core()
@@ -84,20 +84,20 @@ class ClusterRoleTest extends TestCase
         $this->assertEquals([$rule], $cr->getRules());
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $crs = $this->cluster->getAllRoles();
+        $allRoles = $this->cluster->getAllRoles();
 
-        $this->assertInstanceOf(ResourcesList::class, $crs);
+        $this->assertInstanceOf(ResourcesList::class, $allRoles);
 
-        foreach ($crs as $cr) {
-            $this->assertInstanceOf(K8sClusterRole::class, $cr);
+        foreach ($allRoles as $allRole) {
+            $this->assertInstanceOf(K8sClusterRole::class, $allRole);
 
-            $this->assertNotNull($cr->getName());
+            $this->assertNotNull($allRole->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
         $rule = K8s::rule()
             ->core()
@@ -105,21 +105,21 @@ class ClusterRoleTest extends TestCase
             ->addResourceNames(['pod-name', 'configmap-name'])
             ->addVerbs(['get', 'list', 'watch']);
 
-        $cr = $this->cluster->getClusterRoleByName('admin-cr');
+        $k8sClusterRole = $this->cluster->getClusterRoleByName('admin-cr');
 
-        $this->assertInstanceOf(K8sClusterRole::class, $cr);
+        $this->assertInstanceOf(K8sClusterRole::class, $k8sClusterRole);
 
-        $this->assertTrue($cr->isSynced());
+        $this->assertTrue($k8sClusterRole->isSynced());
 
-        $this->assertEquals('rbac.authorization.k8s.io/v1', $cr->getApiVersion());
-        $this->assertEquals('admin-cr', $cr->getName());
-        $this->assertEquals(['tier' => 'backend'], $cr->getLabels());
-        $this->assertEquals([$rule], $cr->getRules());
+        $this->assertEquals('rbac.authorization.k8s.io/v1', $k8sClusterRole->getApiVersion());
+        $this->assertEquals('admin-cr', $k8sClusterRole->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sClusterRole->getLabels());
+        $this->assertEquals([$rule], $k8sClusterRole->getRules());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $cr = $this->cluster->getClusterRoleByName('admin-cr');
+        $k8sClusterRole = $this->cluster->getClusterRoleByName('admin-cr');
 
         $rule = K8s::rule()
             ->core()
@@ -127,27 +127,27 @@ class ClusterRoleTest extends TestCase
             ->addResourceNames(['pod-name'])
             ->addVerbs(['get', 'list']);
 
-        $this->assertTrue($cr->isSynced());
+        $this->assertTrue($k8sClusterRole->isSynced());
 
-        $cr->setRules([$rule]);
+        $k8sClusterRole->setRules([$rule]);
 
-        $cr->createOrUpdate();
+        $k8sClusterRole->createOrUpdate();
 
-        $this->assertTrue($cr->isSynced());
+        $this->assertTrue($k8sClusterRole->isSynced());
 
-        $this->assertEquals('rbac.authorization.k8s.io/v1', $cr->getApiVersion());
-        $this->assertEquals('admin-cr', $cr->getName());
-        $this->assertEquals(['tier' => 'backend'], $cr->getLabels());
-        $this->assertEquals([$rule], $cr->getRules());
+        $this->assertEquals('rbac.authorization.k8s.io/v1', $k8sClusterRole->getApiVersion());
+        $this->assertEquals('admin-cr', $k8sClusterRole->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sClusterRole->getLabels());
+        $this->assertEquals([$rule], $k8sClusterRole->getRules());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $cr = $this->cluster->getClusterRoleByName('admin-cr');
+        $k8sClusterRole = $this->cluster->getClusterRoleByName('admin-cr');
 
-        $this->assertTrue($cr->delete());
+        $this->assertTrue($k8sClusterRole->delete());
 
-        while ($cr->exists()) {
+        while ($k8sClusterRole->exists()) {
             sleep(1);
         }
 
@@ -156,7 +156,7 @@ class ClusterRoleTest extends TestCase
         $this->cluster->getClusterRoleByName('admin-cr');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->clusterRole()->watchAll(function ($type, $cr) {
             if ($cr->getName() === 'admin-cr') {
@@ -167,11 +167,9 @@ class ClusterRoleTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->clusterRole()->watchByName('admin-cr', function ($type, $cr) {
-            return $cr->getName() === 'admin-cr';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->clusterRole()->watchByName('admin-cr', fn($type, $cr): bool => $cr->getName() === 'admin-cr', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

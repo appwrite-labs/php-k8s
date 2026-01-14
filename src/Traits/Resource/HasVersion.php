@@ -15,19 +15,14 @@ trait HasVersion
 
     /**
      * Overwrite, at runtime, the stable version of the resource.
-     *
-     * @param  string  $version
-     * @return void
      */
-    public static function setDefaultVersion(string $version)
+    public static function setDefaultVersion(string $version): void
     {
         static::$defaultVersion = $version;
     }
 
     /**
      * Get the default version of the resource.
-     *
-     * @return string
      */
     public static function getDefaultVersion(): string
     {
@@ -38,8 +33,6 @@ trait HasVersion
      * Get the API version of the resource.
      * This function can be overwritten at the resource
      * level, depending which are the defaults.
-     *
-     * @return string
      */
     public function getApiVersion(): string
     {

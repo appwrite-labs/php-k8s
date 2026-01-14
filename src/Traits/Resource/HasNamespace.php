@@ -26,9 +26,8 @@ trait HasNamespace
      * Overwrite, at runtime, the default namespace for the resource.
      *
      * @param  string  $version
-     * @return void
      */
-    public static function setDefaultNamespace(string $namespace)
+    public static function setDefaultNamespace(string $namespace): void
     {
         static::$defaultNamespace = $namespace;
     }

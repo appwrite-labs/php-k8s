@@ -24,7 +24,6 @@ trait HasTemplate
     /**
      * Get the template pod.
      *
-     * @param  bool  $asInstance
      * @return array|\RenokiCo\PhpK8s\Kinds\K8sPod
      */
     public function getTemplate(bool $asInstance = true)
@@ -32,7 +31,7 @@ trait HasTemplate
         $template = $this->getSpec('template', []);
 
         if ($asInstance) {
-            $template = new K8sPod($this->cluster, $template);
+            return new K8sPod($this->cluster, $template);
         }
 
         return $template;

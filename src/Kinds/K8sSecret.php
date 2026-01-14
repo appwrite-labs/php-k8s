@@ -28,7 +28,6 @@ class K8sSecret extends K8sResource implements InteractsWithK8sCluster, Watchabl
      * Get the data attribute.
      * Supports base64 decoding.
      *
-     * @param  bool  $decode
      * @return mixed
      */
     public function getData(bool $decode = false)
@@ -36,8 +35,8 @@ class K8sSecret extends K8sResource implements InteractsWithK8sCluster, Watchabl
         $data = $this->getAttribute('data', []);
 
         if ($decode) {
-            foreach ($data as $key => &$value) {
-                $value = base64_decode($value);
+            foreach ($data as &$value) {
+                $value = base64_decode((string) $value);
             }
         }
 
@@ -48,15 +47,13 @@ class K8sSecret extends K8sResource implements InteractsWithK8sCluster, Watchabl
      * Set the data attribute.
      * Supports base64 encoding.
      *
-     * @param  array  $data
-     * @param  bool  $encode
      * @return $this
      */
     public function setData(array $data, bool $encode = true)
     {
         if ($encode) {
-            foreach ($data as $key => &$value) {
-                $value = base64_encode($value);
+            foreach ($data as &$value) {
+                $value = base64_encode((string) $value);
             }
         }
 
@@ -66,7 +63,6 @@ class K8sSecret extends K8sResource implements InteractsWithK8sCluster, Watchabl
     /**
      * Add a new key-value pair to the data.
      *
-     * @param  string  $name
      * @param  mixed  $value
      * @param  bool  $encode
      * @return $this
@@ -74,20 +70,19 @@ class K8sSecret extends K8sResource implements InteractsWithK8sCluster, Watchabl
     public function addData(string $name, $value, $encode = true)
     {
         if ($encode) {
-            $value = base64_encode($value);
+            $value = base64_encode((string) $value);
         }
 
-        return $this->setAttribute("data.{$name}", $value);
+        return $this->setAttribute('data.' . $name, $value);
     }
 
     /**
      * Remove a key from the data attribute.
      *
-     * @param  string  $name
      * @return $this
      */
     public function removeData(string $name)
     {
-        return $this->removeAttribute("data.{$name}");
+        return $this->removeAttribute('data.' . $name);
     }
 }

@@ -10,7 +10,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class RoleBindingTest extends TestCase
 {
-    public function test_role_binding_build()
+    public function test_role_binding_build(): void
     {
         $rule = K8s::rule()
             ->core()
@@ -18,7 +18,7 @@ class RoleBindingTest extends TestCase
             ->addResourceNames(['pod-name', 'configmap-name'])
             ->addVerbs(['get', 'list', 'watch']);
 
-        $role = $this->cluster->role()
+        $k8sRole = $this->cluster->role()
             ->setName('admin')
             ->addRules([$rule]);
 
@@ -27,21 +27,21 @@ class RoleBindingTest extends TestCase
             ->setKind('User')
             ->setName('user-1');
 
-        $rb = $this->cluster->roleBinding()
+        $k8sRoleBinding = $this->cluster->roleBinding()
             ->setName('user-binding')
             ->setLabels(['tier' => 'backend'])
-            ->setRole($role)
+            ->setRole($k8sRole)
             ->addSubjects([$subject])
             ->setSubjects([$subject]);
 
-        $this->assertEquals('rbac.authorization.k8s.io/v1', $rb->getApiVersion());
-        $this->assertEquals('user-binding', $rb->getName());
-        $this->assertEquals(['tier' => 'backend'], $rb->getLabels());
-        $this->assertEquals([$subject], $rb->getSubjects());
-        $this->assertEquals(['apiGroup' => 'rbac.authorization.k8s.io', 'kind' => 'Role', 'name' => 'admin'], $rb->getRole());
+        $this->assertEquals('rbac.authorization.k8s.io/v1', $k8sRoleBinding->getApiVersion());
+        $this->assertEquals('user-binding', $k8sRoleBinding->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sRoleBinding->getLabels());
+        $this->assertEquals([$subject], $k8sRoleBinding->getSubjects());
+        $this->assertEquals(['apiGroup' => 'rbac.authorization.k8s.io', 'kind' => 'Role', 'name' => 'admin'], $k8sRoleBinding->getRole());
     }
 
-    public function test_role_binding_from_yaml()
+    public function test_role_binding_from_yaml(): void
     {
         $rule = K8s::rule()
             ->core()
@@ -49,7 +49,7 @@ class RoleBindingTest extends TestCase
             ->addResourceNames(['pod-name', 'configmap-name'])
             ->addVerbs(['get', 'list', 'watch']);
 
-        $role = $this->cluster->role()
+        $this->cluster->role()
             ->setName('admin')
             ->addRules([$rule]);
 
@@ -67,7 +67,7 @@ class RoleBindingTest extends TestCase
         $this->assertEquals(['apiGroup' => 'rbac.authorization.k8s.io', 'kind' => 'Role', 'name' => 'admin'], $rb->getRole());
     }
 
-    public function test_role_binding_api_interaction()
+    public function test_role_binding_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -78,7 +78,7 @@ class RoleBindingTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $rule = K8s::rule()
             ->core()
@@ -86,7 +86,7 @@ class RoleBindingTest extends TestCase
             ->addResourceNames(['pod-name', 'configmap-name'])
             ->addVerbs(['get', 'list', 'watch']);
 
-        $role = $this->cluster->role()
+        $k8sRole = $this->cluster->role()
             ->setName('admin')
             ->addRules([$rule]);
 
@@ -98,7 +98,7 @@ class RoleBindingTest extends TestCase
         $rb = $this->cluster->roleBinding()
             ->setName('user-binding')
             ->setLabels(['tier' => 'backend'])
-            ->setRole($role)
+            ->setRole($k8sRole)
             ->addSubjects([$subject])
             ->setSubjects([$subject]);
 
@@ -106,7 +106,7 @@ class RoleBindingTest extends TestCase
         $this->assertFalse($rb->exists());
 
         $rb = $rb->createOrUpdate();
-        $role = $role->createOrUpdate();
+        $k8sRole->createOrUpdate();
 
         $this->assertTrue($rb->isSynced());
         $this->assertTrue($rb->exists());
@@ -120,78 +120,78 @@ class RoleBindingTest extends TestCase
         $this->assertEquals(['apiGroup' => 'rbac.authorization.k8s.io', 'kind' => 'Role', 'name' => 'admin'], $rb->getRole());
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $rolebindings = $this->cluster->getAllRoleBindings();
+        $allRoleBindings = $this->cluster->getAllRoleBindings();
 
-        $this->assertInstanceOf(ResourcesList::class, $rolebindings);
+        $this->assertInstanceOf(ResourcesList::class, $allRoleBindings);
 
-        foreach ($rolebindings as $rb) {
-            $this->assertInstanceOf(K8sRoleBinding::class, $rb);
+        foreach ($allRoleBindings as $allRoleBinding) {
+            $this->assertInstanceOf(K8sRoleBinding::class, $allRoleBinding);
 
-            $this->assertNotNull($rb->getName());
+            $this->assertNotNull($allRoleBinding->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
         $subject = K8s::subject()
             ->setApiGroup('rbac.authorization.k8s.io')
             ->setKind('User')
             ->setName('user-1');
 
-        $role = $this->cluster->getRoleByName('admin');
-        $rb = $this->cluster->getRoleBindingByName('user-binding');
+        $this->cluster->getRoleByName('admin');
+        $k8sRoleBinding = $this->cluster->getRoleBindingByName('user-binding');
 
-        $this->assertInstanceOf(K8sRoleBinding::class, $rb);
+        $this->assertInstanceOf(K8sRoleBinding::class, $k8sRoleBinding);
 
-        $this->assertTrue($rb->isSynced());
+        $this->assertTrue($k8sRoleBinding->isSynced());
 
-        $this->assertEquals('rbac.authorization.k8s.io/v1', $rb->getApiVersion());
-        $this->assertEquals('user-binding', $rb->getName());
-        $this->assertEquals(['tier' => 'backend'], $rb->getLabels());
-        $this->assertEquals([$subject], $rb->getSubjects());
-        $this->assertEquals(['apiGroup' => 'rbac.authorization.k8s.io', 'kind' => 'Role', 'name' => 'admin'], $rb->getRole());
+        $this->assertEquals('rbac.authorization.k8s.io/v1', $k8sRoleBinding->getApiVersion());
+        $this->assertEquals('user-binding', $k8sRoleBinding->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sRoleBinding->getLabels());
+        $this->assertEquals([$subject], $k8sRoleBinding->getSubjects());
+        $this->assertEquals(['apiGroup' => 'rbac.authorization.k8s.io', 'kind' => 'Role', 'name' => 'admin'], $k8sRoleBinding->getRole());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $role = $this->cluster->getRoleByName('admin');
-        $rb = $this->cluster->getRoleBindingByName('user-binding');
+        $this->cluster->getRoleByName('admin');
+        $k8sRoleBinding = $this->cluster->getRoleBindingByName('user-binding');
 
         $subject = K8s::subject()
             ->setApiGroup('rbac.authorization.k8s.io')
             ->setKind('User')
             ->setName('user-2');
 
-        $this->assertTrue($rb->isSynced());
+        $this->assertTrue($k8sRoleBinding->isSynced());
 
-        $rb->setSubjects([$subject]);
+        $k8sRoleBinding->setSubjects([$subject]);
 
-        $rb->createOrUpdate();
+        $k8sRoleBinding->createOrUpdate();
 
-        $this->assertTrue($rb->isSynced());
+        $this->assertTrue($k8sRoleBinding->isSynced());
 
-        $this->assertEquals('rbac.authorization.k8s.io/v1', $rb->getApiVersion());
-        $this->assertEquals('user-binding', $rb->getName());
-        $this->assertEquals(['tier' => 'backend'], $rb->getLabels());
-        $this->assertEquals([$subject], $rb->getSubjects());
-        $this->assertEquals(['apiGroup' => 'rbac.authorization.k8s.io', 'kind' => 'Role', 'name' => 'admin'], $rb->getRole());
+        $this->assertEquals('rbac.authorization.k8s.io/v1', $k8sRoleBinding->getApiVersion());
+        $this->assertEquals('user-binding', $k8sRoleBinding->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sRoleBinding->getLabels());
+        $this->assertEquals([$subject], $k8sRoleBinding->getSubjects());
+        $this->assertEquals(['apiGroup' => 'rbac.authorization.k8s.io', 'kind' => 'Role', 'name' => 'admin'], $k8sRoleBinding->getRole());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $role = $this->cluster->getRoleByName('admin');
-        $rb = $this->cluster->getRoleBindingByName('user-binding');
+        $k8sRole = $this->cluster->getRoleByName('admin');
+        $k8sRoleBinding = $this->cluster->getRoleBindingByName('user-binding');
 
-        $this->assertTrue($role->delete());
-        $this->assertTrue($rb->delete());
+        $this->assertTrue($k8sRole->delete());
+        $this->assertTrue($k8sRoleBinding->delete());
 
-        while ($role->exists()) {
+        while ($k8sRole->exists()) {
             sleep(1);
         }
 
-        while ($rb->exists()) {
+        while ($k8sRoleBinding->exists()) {
             sleep(1);
         }
 
@@ -201,7 +201,7 @@ class RoleBindingTest extends TestCase
         $this->cluster->getRoleBindingByName('user-binding');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->roleBinding()->watchAll(function ($type, $role) {
             if ($role->getName() === 'user-binding') {
@@ -212,11 +212,9 @@ class RoleBindingTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->roleBinding()->watchByName('user-binding', function ($type, $role) {
-            return $role->getName() === 'user-binding';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->roleBinding()->watchByName('user-binding', fn($type, $role): bool => $role->getName() === 'user-binding', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

@@ -6,7 +6,7 @@ use RenokiCo\PhpK8s\K8s;
 
 class SubjectTest extends TestCase
 {
-    public function test_build_subject()
+    public function test_build_subject(): void
     {
         $subject = K8s::subject()
             ->setApiGroup('rbac.authorization.k8s.io')

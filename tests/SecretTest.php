@@ -8,9 +8,9 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class SecretTest extends TestCase
 {
-    public function test_secret_build()
+    public function test_secret_build(): void
     {
-        $secret = $this->cluster->secret()
+        $k8sSecret = $this->cluster->secret()
             ->setName('passwords')
             ->setLabels(['tier' => 'backend'])
             ->setData(['root' => 'somevalue'])
@@ -18,15 +18,15 @@ class SecretTest extends TestCase
             ->removeData('root')
             ->immutable();
 
-        $this->assertEquals('v1', $secret->getApiVersion());
-        $this->assertEquals('passwords', $secret->getName());
-        $this->assertEquals(['tier' => 'backend'], $secret->getLabels());
-        $this->assertEquals(['postgres' => base64_encode('postgres')], $secret->getData(false));
-        $this->assertEquals(['postgres' => 'postgres'], $secret->getData(true));
-        $this->assertTrue($secret->isImmutable());
+        $this->assertEquals('v1', $k8sSecret->getApiVersion());
+        $this->assertEquals('passwords', $k8sSecret->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sSecret->getLabels());
+        $this->assertEquals(['postgres' => base64_encode('postgres')], $k8sSecret->getData(false));
+        $this->assertEquals(['postgres' => 'postgres'], $k8sSecret->getData(true));
+        $this->assertTrue($k8sSecret->isImmutable());
     }
 
-    public function test_secret_from_yaml()
+    public function test_secret_from_yaml(): void
     {
         $secret = $this->cluster->fromYamlFile(__DIR__.'/yaml/secret.yaml');
 
@@ -38,7 +38,7 @@ class SecretTest extends TestCase
         $this->assertTrue($secret->isImmutable());
     }
 
-    public function test_secret_api_interaction()
+    public function test_secret_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -49,9 +49,9 @@ class SecretTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function test_immutability()
+    public function test_immutability(): void
     {
-        $secret = $this->cluster->secret()
+        $k8sSecret = $this->cluster->secret()
             ->setName('passwords')
             ->setLabels(['tier' => 'backend'])
             ->setData(['root' => 'somevalue'])
@@ -59,16 +59,16 @@ class SecretTest extends TestCase
             ->removeData('root')
             ->immutable();
 
-        $secret->createOrUpdate();
+        $k8sSecret->createOrUpdate();
 
-        $secret->refresh();
+        $k8sSecret->refresh();
 
-        $this->assertTrue($secret->isImmutable());
+        $this->assertTrue($k8sSecret->isImmutable());
 
-        $secret->delete();
+        $k8sSecret->delete();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $secret = $this->cluster->secret()
             ->setName('passwords')
@@ -94,67 +94,67 @@ class SecretTest extends TestCase
         $this->assertEquals(['postgres' => 'postgres'], $secret->getData(true));
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $secrets = $this->cluster->getAllSecrets();
+        $allSecrets = $this->cluster->getAllSecrets();
 
-        $this->assertInstanceOf(ResourcesList::class, $secrets);
+        $this->assertInstanceOf(ResourcesList::class, $allSecrets);
 
-        foreach ($secrets as $secret) {
-            $this->assertInstanceOf(K8sSecret::class, $secret);
+        foreach ($allSecrets as $allSecret) {
+            $this->assertInstanceOf(K8sSecret::class, $allSecret);
 
-            $this->assertNotNull($secret->getName());
+            $this->assertNotNull($allSecret->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $secret = $this->cluster->getSecretByName('passwords');
+        $k8sSecret = $this->cluster->getSecretByName('passwords');
 
-        $this->assertInstanceOf(K8sSecret::class, $secret);
+        $this->assertInstanceOf(K8sSecret::class, $k8sSecret);
 
-        $this->assertTrue($secret->isSynced());
+        $this->assertTrue($k8sSecret->isSynced());
 
-        $this->assertEquals('v1', $secret->getApiVersion());
-        $this->assertEquals('passwords', $secret->getName());
-        $this->assertEquals(['tier' => 'backend'], $secret->getLabels());
-        $this->assertEquals(['postgres' => base64_encode('postgres')], $secret->getData(false));
-        $this->assertEquals(['postgres' => 'postgres'], $secret->getData(true));
+        $this->assertEquals('v1', $k8sSecret->getApiVersion());
+        $this->assertEquals('passwords', $k8sSecret->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sSecret->getLabels());
+        $this->assertEquals(['postgres' => base64_encode('postgres')], $k8sSecret->getData(false));
+        $this->assertEquals(['postgres' => 'postgres'], $k8sSecret->getData(true));
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $secret = $this->cluster->getSecretByName('passwords');
+        $k8sSecret = $this->cluster->getSecretByName('passwords');
 
-        $this->assertTrue($secret->isSynced());
+        $this->assertTrue($k8sSecret->isSynced());
 
-        $secret
+        $k8sSecret
             ->removeData('postgres')
             ->addData('root', 'secret');
 
-        $secret->createOrUpdate();
+        $k8sSecret->createOrUpdate();
 
-        $this->assertTrue($secret->isSynced());
+        $this->assertTrue($k8sSecret->isSynced());
 
-        $this->assertEquals('v1', $secret->getApiVersion());
-        $this->assertEquals('passwords', $secret->getName());
-        $this->assertEquals(['tier' => 'backend'], $secret->getLabels());
-        $this->assertEquals(['root' => base64_encode('secret')], $secret->getData(false));
-        $this->assertEquals(['root' => 'secret'], $secret->getData(true));
+        $this->assertEquals('v1', $k8sSecret->getApiVersion());
+        $this->assertEquals('passwords', $k8sSecret->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sSecret->getLabels());
+        $this->assertEquals(['root' => base64_encode('secret')], $k8sSecret->getData(false));
+        $this->assertEquals(['root' => 'secret'], $k8sSecret->getData(true));
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $secret = $this->cluster->getSecretByName('passwords');
+        $k8sSecret = $this->cluster->getSecretByName('passwords');
 
-        $this->assertTrue($secret->delete());
+        $this->assertTrue($k8sSecret->delete());
 
         $this->expectException(KubernetesAPIException::class);
 
         $this->cluster->getSecretByName('passwords');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->secret()->watchAll(function ($type, $secret) {
             if ($secret->getName() === 'passwords') {
@@ -165,11 +165,9 @@ class SecretTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->secret()->watchByName('passwords', function ($type, $secret) {
-            return $secret->getName() === 'passwords';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->secret()->watchByName('passwords', fn($type, $secret): bool => $secret->getName() === 'passwords', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

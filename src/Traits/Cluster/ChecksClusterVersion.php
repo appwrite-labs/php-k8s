@@ -18,7 +18,6 @@ trait ChecksClusterVersion
     /**
      * Load the cluster version.
      *
-     * @return void
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
@@ -28,15 +27,15 @@ trait ChecksClusterVersion
             return;
         }
 
-        $callableUrl = "{$this->url}/version";
+        $callableUrl = $this->url . '/version';
 
         try {
             $response = $this->getClient()->request('GET', $callableUrl);
-        } catch (ClientException $e) {
-            $payload = json_decode((string) $e->getResponse()->getBody(), true);
+        } catch (ClientException $clientException) {
+            $payload = json_decode((string) $clientException->getResponse()->getBody(), true);
 
             throw new KubernetesAPIException(
-                $e->getMessage(),
+                $clientException->getMessage(),
                 $payload['code'] ?? 0,
                 $payload
             );
@@ -50,9 +49,6 @@ trait ChecksClusterVersion
     /**
      * Check if the cluster version is newer
      * than a specific version.
-     *
-     * @param  string  $kubernetesVersion
-     * @return bool
      */
     public function newerThan(string $kubernetesVersion): bool
     {
@@ -66,9 +62,6 @@ trait ChecksClusterVersion
     /**
      * Check if the cluster version is older
      * than a specific version.
-     *
-     * @param  string  $kubernetesVersion
-     * @return bool
      */
     public function olderThan(string $kubernetesVersion): bool
     {

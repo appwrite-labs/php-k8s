@@ -56,8 +56,6 @@ class K8sStatefulSet extends K8sResource implements
     /**
      * Set the updating strategy for the set.
      *
-     * @param  string  $strategy
-     * @param  int  $partition
      * @return $this
      */
     public function setUpdateStrategy(string $strategy, int $partition = 0)
@@ -91,7 +89,7 @@ class K8sStatefulSet extends K8sResource implements
      */
     public function getService()
     {
-        return $this->getSpec('serviceName', null);
+        return $this->getSpec('serviceName');
     }
 
     /**
@@ -109,7 +107,6 @@ class K8sStatefulSet extends K8sResource implements
     /**
      * Set the volume claims templates.
      *
-     * @param  array  $volumeClaims
      * @return $this
      */
     public function setVolumeClaims(array $volumeClaims = [])
@@ -126,7 +123,6 @@ class K8sStatefulSet extends K8sResource implements
     /**
      * Get the volume claims templates.
      *
-     * @param  bool  $asInstance
      * @return array
      */
     public function getVolumeClaims(bool $asInstance = true)
@@ -144,8 +140,6 @@ class K8sStatefulSet extends K8sResource implements
 
     /**
      * Get the selector for the pods that are owned by this resource.
-     *
-     * @return array
      */
     public function podsSelector(): array
     {
@@ -160,8 +154,6 @@ class K8sStatefulSet extends K8sResource implements
 
     /**
      * Get the current replicas.
-     *
-     * @return int
      */
     public function getCurrentReplicasCount(): int
     {
@@ -170,8 +162,6 @@ class K8sStatefulSet extends K8sResource implements
 
     /**
      * Get the ready replicas.
-     *
-     * @return int
      */
     public function getReadyReplicasCount(): int
     {
@@ -180,8 +170,6 @@ class K8sStatefulSet extends K8sResource implements
 
     /**
      * Get the total desired replicas.
-     *
-     * @return int
      */
     public function getDesiredReplicasCount(): int
     {

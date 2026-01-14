@@ -8,9 +8,9 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class ServiceTest extends TestCase
 {
-    public function test_service_build()
+    public function test_service_build(): void
     {
-        $svc = $this->cluster->service()
+        $k8sService = $this->cluster->service()
             ->setName('nginx')
             ->setLabels(['tier' => 'backend'])
             ->setAnnotations(['nginx/ann' => 'yes'])
@@ -18,15 +18,15 @@ class ServiceTest extends TestCase
             ->addPorts([['protocol' => 'TCP', 'port' => 80, 'targetPort' => 80]])
             ->setPorts([['protocol' => 'TCP', 'port' => 80, 'targetPort' => 80]]);
 
-        $this->assertEquals('v1', $svc->getApiVersion());
-        $this->assertEquals('nginx', $svc->getName());
-        $this->assertEquals(['tier' => 'backend'], $svc->getLabels());
-        $this->assertEquals(['nginx/ann' => 'yes'], $svc->getAnnotations());
-        $this->assertEquals(['app' => 'frontend'], $svc->getSelectors());
-        $this->assertEquals([['protocol' => 'TCP', 'port' => 80, 'targetPort' => 80]], $svc->getPorts());
+        $this->assertEquals('v1', $k8sService->getApiVersion());
+        $this->assertEquals('nginx', $k8sService->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sService->getLabels());
+        $this->assertEquals(['nginx/ann' => 'yes'], $k8sService->getAnnotations());
+        $this->assertEquals(['app' => 'frontend'], $k8sService->getSelectors());
+        $this->assertEquals([['protocol' => 'TCP', 'port' => 80, 'targetPort' => 80]], $k8sService->getPorts());
     }
 
-    public function test_service_from_yaml()
+    public function test_service_from_yaml(): void
     {
         $svc = $this->cluster->fromYamlFile(__DIR__.'/yaml/service.yaml');
 
@@ -40,7 +40,7 @@ class ServiceTest extends TestCase
         ]], $svc->getPorts());
     }
 
-    public function test_service_api_interaction()
+    public function test_service_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -51,7 +51,7 @@ class ServiceTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $svc = $this->cluster->service()
             ->setName('nginx')
@@ -80,74 +80,74 @@ class ServiceTest extends TestCase
         $this->assertEquals([[
             'protocol' => 'TCP', 'port' => 80, 'targetPort' => 80,
         ]], $svc->getPorts());
-        $this->assertEquals("{$svc->getName()}.{$svc->getNamespace()}.svc.cluster.local", $svc->getClusterDns());
+        $this->assertEquals(sprintf('%s.%s.svc.cluster.local', $svc->getName(), $svc->getNamespace()), $svc->getClusterDns());
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $services = $this->cluster->getAllServices();
+        $allServices = $this->cluster->getAllServices();
 
-        $this->assertInstanceOf(ResourcesList::class, $services);
+        $this->assertInstanceOf(ResourcesList::class, $allServices);
 
-        foreach ($services as $svc) {
-            $this->assertInstanceOf(K8sService::class, $svc);
+        foreach ($allServices as $allService) {
+            $this->assertInstanceOf(K8sService::class, $allService);
 
-            $this->assertNotNull($svc->getName());
+            $this->assertNotNull($allService->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $svc = $this->cluster->getServiceByName('nginx');
+        $k8sService = $this->cluster->getServiceByName('nginx');
 
-        $this->assertInstanceOf(K8sService::class, $svc);
+        $this->assertInstanceOf(K8sService::class, $k8sService);
 
-        $this->assertTrue($svc->isSynced());
+        $this->assertTrue($k8sService->isSynced());
 
-        $this->assertEquals('v1', $svc->getApiVersion());
-        $this->assertEquals('nginx', $svc->getName());
-        $this->assertEquals(['tier' => 'backend'], $svc->getLabels());
-        $this->assertEquals(['nginx/ann' => 'yes'], $svc->getAnnotations());
-        $this->assertEquals(['app' => 'frontend'], $svc->getSelectors());
+        $this->assertEquals('v1', $k8sService->getApiVersion());
+        $this->assertEquals('nginx', $k8sService->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sService->getLabels());
+        $this->assertEquals(['nginx/ann' => 'yes'], $k8sService->getAnnotations());
+        $this->assertEquals(['app' => 'frontend'], $k8sService->getSelectors());
         $this->assertEquals([[
             'protocol' => 'TCP', 'port' => 80, 'targetPort' => 80,
-        ]], $svc->getPorts());
+        ]], $k8sService->getPorts());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $svc = $this->cluster->getServiceByName('nginx');
+        $k8sService = $this->cluster->getServiceByName('nginx');
 
-        $this->assertTrue($svc->isSynced());
+        $this->assertTrue($k8sService->isSynced());
 
-        $svc->setAnnotations([]);
+        $k8sService->setAnnotations([]);
 
-        $svc->createOrUpdate();
+        $k8sService->createOrUpdate();
 
-        $this->assertTrue($svc->isSynced());
+        $this->assertTrue($k8sService->isSynced());
 
-        $this->assertEquals('v1', $svc->getApiVersion());
-        $this->assertEquals('nginx', $svc->getName());
-        $this->assertEquals(['tier' => 'backend'], $svc->getLabels());
-        $this->assertEquals([], $svc->getAnnotations());
-        $this->assertEquals(['app' => 'frontend'], $svc->getSelectors());
+        $this->assertEquals('v1', $k8sService->getApiVersion());
+        $this->assertEquals('nginx', $k8sService->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sService->getLabels());
+        $this->assertEquals([], $k8sService->getAnnotations());
+        $this->assertEquals(['app' => 'frontend'], $k8sService->getSelectors());
         $this->assertEquals([[
             'protocol' => 'TCP', 'port' => 80, 'targetPort' => 80,
-        ]], $svc->getPorts());
+        ]], $k8sService->getPorts());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $service = $this->cluster->getServiceByName('nginx');
+        $k8sService = $this->cluster->getServiceByName('nginx');
 
-        $this->assertTrue($service->delete());
+        $this->assertTrue($k8sService->delete());
 
         $this->expectException(KubernetesAPIException::class);
 
         $this->cluster->getSecretByName('nginx');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->service()->watchAll(function ($type, $service) {
             if ($service->getName() === 'nginx') {
@@ -158,11 +158,9 @@ class ServiceTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->service()->watchByName('nginx', function ($type, $service) {
-            return $service->getName() === 'nginx';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->service()->watchByName('nginx', fn($type, $service): bool => $service->getName() === 'nginx', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

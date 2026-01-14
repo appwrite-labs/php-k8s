@@ -10,9 +10,9 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class PodDisruptionBudgetTest extends TestCase
 {
-    public function test_pod_disruption_budget_build()
+    public function test_pod_disruption_budget_build(): void
     {
-        $pdb = $this->cluster->podDisruptionBudget()
+        $k8sPodDisruptionBudget = $this->cluster->podDisruptionBudget()
             ->setName('mysql-pdb')
             ->setSelectors(['matchLabels' => ['tier' => 'backend']])
             ->setLabels(['tier' => 'backend'])
@@ -20,16 +20,16 @@ class PodDisruptionBudgetTest extends TestCase
             ->setMinAvailable(1)
             ->setMaxUnavailable('25%');
 
-        $this->assertEquals('policy/v1', $pdb->getApiVersion());
-        $this->assertEquals('mysql-pdb', $pdb->getName());
-        $this->assertEquals(['matchLabels' => ['tier' => 'backend']], $pdb->getSelectors());
-        $this->assertEquals(['tier' => 'backend'], $pdb->getLabels());
-        $this->assertEquals(['mysql/annotation' => 'yes'], $pdb->getAnnotations());
-        $this->assertEquals('25%', $pdb->getMaxUnavailable());
-        $this->assertEquals(null, $pdb->getMinAvailable());
+        $this->assertEquals('policy/v1', $k8sPodDisruptionBudget->getApiVersion());
+        $this->assertEquals('mysql-pdb', $k8sPodDisruptionBudget->getName());
+        $this->assertEquals(['matchLabels' => ['tier' => 'backend']], $k8sPodDisruptionBudget->getSelectors());
+        $this->assertEquals(['tier' => 'backend'], $k8sPodDisruptionBudget->getLabels());
+        $this->assertEquals(['mysql/annotation' => 'yes'], $k8sPodDisruptionBudget->getAnnotations());
+        $this->assertEquals('25%', $k8sPodDisruptionBudget->getMaxUnavailable());
+        $this->assertEquals(null, $k8sPodDisruptionBudget->getMinAvailable());
     }
 
-    public function test_pod_disruption_budget_from_yaml()
+    public function test_pod_disruption_budget_from_yaml(): void
     {
         [$pdb1, $pdb2] = $this->cluster->fromYamlFile(__DIR__.'/yaml/pdb.yaml');
 
@@ -50,7 +50,7 @@ class PodDisruptionBudgetTest extends TestCase
         $this->assertEquals('25%', $pdb2->getMinAvailable());
     }
 
-    public function test_pod_disruption_budget_api_interaction()
+    public function test_pod_disruption_budget_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -61,7 +61,7 @@ class PodDisruptionBudgetTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -72,7 +72,7 @@ class PodDisruptionBudgetTest extends TestCase
             ->addPort(3307, 'TCP', 'mysql-alt')
             ->setEnv(['MYSQL_ROOT_PASSWORD' => 'test']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setLabels(['tier' => 'backend', 'deployment-name' => 'mysql'])
             ->setContainers([$mysql]);
@@ -85,7 +85,7 @@ class PodDisruptionBudgetTest extends TestCase
             ->setReplicas(1)
             ->setUpdateStrategy('RollingUpdate')
             ->setMinReadySeconds(0)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
         $pdb = $this->cluster->podDisruptionBudget()
             ->setName('mysql-pdb')
@@ -116,42 +116,42 @@ class PodDisruptionBudgetTest extends TestCase
         $this->assertEquals(null, $pdb->getMinAvailable());
 
         while (! $dep->allPodsAreRunning()) {
-            dump("Waiting for pods of {$dep->getName()} to be up and running...");
+            dump(sprintf('Waiting for pods of %s to be up and running...', $dep->getName()));
             sleep(1);
         }
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $pdbs = $this->cluster->getAllPodDisruptionBudgets();
+        $allPodDisruptionBudgets = $this->cluster->getAllPodDisruptionBudgets();
 
-        $this->assertInstanceOf(ResourcesList::class, $pdbs);
+        $this->assertInstanceOf(ResourcesList::class, $allPodDisruptionBudgets);
 
-        foreach ($pdbs as $pdb) {
-            $this->assertInstanceOf(K8sPodDisruptionBudget::class, $pdb);
+        foreach ($allPodDisruptionBudgets as $allPodDisruptionBudget) {
+            $this->assertInstanceOf(K8sPodDisruptionBudget::class, $allPodDisruptionBudget);
 
-            $this->assertNotNull($pdb->getName());
+            $this->assertNotNull($allPodDisruptionBudget->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $pdb = $this->cluster->getPodDisruptionBudgetByName('mysql-pdb');
+        $k8sPodDisruptionBudget = $this->cluster->getPodDisruptionBudgetByName('mysql-pdb');
 
-        $this->assertInstanceOf(K8sPodDisruptionBudget::class, $pdb);
+        $this->assertInstanceOf(K8sPodDisruptionBudget::class, $k8sPodDisruptionBudget);
 
-        $this->assertTrue($pdb->isSynced());
+        $this->assertTrue($k8sPodDisruptionBudget->isSynced());
 
-        $this->assertEquals('policy/v1', $pdb->getApiVersion());
-        $this->assertEquals('mysql-pdb', $pdb->getName());
-        $this->assertEquals(['matchLabels' => ['tier' => 'backend']], $pdb->getSelectors());
-        $this->assertEquals(['tier' => 'backend'], $pdb->getLabels());
-        $this->assertEquals(['mysql/annotation' => 'yes'], $pdb->getAnnotations());
-        $this->assertEquals('25%', $pdb->getMaxUnavailable());
-        $this->assertEquals(null, $pdb->getMinAvailable());
+        $this->assertEquals('policy/v1', $k8sPodDisruptionBudget->getApiVersion());
+        $this->assertEquals('mysql-pdb', $k8sPodDisruptionBudget->getName());
+        $this->assertEquals(['matchLabels' => ['tier' => 'backend']], $k8sPodDisruptionBudget->getSelectors());
+        $this->assertEquals(['tier' => 'backend'], $k8sPodDisruptionBudget->getLabels());
+        $this->assertEquals(['mysql/annotation' => 'yes'], $k8sPodDisruptionBudget->getAnnotations());
+        $this->assertEquals('25%', $k8sPodDisruptionBudget->getMaxUnavailable());
+        $this->assertEquals(null, $k8sPodDisruptionBudget->getMinAvailable());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
         $backoff = 0;
         do {
@@ -164,6 +164,7 @@ class PodDisruptionBudgetTest extends TestCase
                 } else {
                     throw $e;
                 }
+
                 if ($backoff > 3) {
                     break;
                 }
@@ -181,14 +182,14 @@ class PodDisruptionBudgetTest extends TestCase
         $this->assertEquals('25%', $pdb->getMinAvailable());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $pdb = $this->cluster->getPodDisruptionBudgetByName('mysql-pdb');
+        $k8sPodDisruptionBudget = $this->cluster->getPodDisruptionBudgetByName('mysql-pdb');
 
-        $this->assertTrue($pdb->delete());
+        $this->assertTrue($k8sPodDisruptionBudget->delete());
 
-        while ($pdb->exists()) {
-            dump("Awaiting for pod disruption budget {$pdb->getName()} to be deleted...");
+        while ($k8sPodDisruptionBudget->exists()) {
+            dump(sprintf('Awaiting for pod disruption budget %s to be deleted...', $k8sPodDisruptionBudget->getName()));
             sleep(1);
         }
 
@@ -197,7 +198,7 @@ class PodDisruptionBudgetTest extends TestCase
         $this->cluster->getPodDisruptionBudgetByName('mysql-pdb');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->podDisruptionBudget()->watchAll(function ($type, $pdb) {
             if ($pdb->getName() === 'mysql-pdb') {
@@ -208,11 +209,9 @@ class PodDisruptionBudgetTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->podDisruptionBudget()->watchByName('mysql-pdb', function ($type, $pdb) {
-            return $pdb->getName() === 'mysql-pdb';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->podDisruptionBudget()->watchByName('mysql-pdb', fn($type, $pdb): bool => $pdb->getName() === 'mysql-pdb', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

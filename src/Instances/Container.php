@@ -7,8 +7,6 @@ class Container extends Instance
     /**
      * Set the image for the container.
      *
-     * @param  string  $image
-     * @param  string  $tag
      * @return $this
      */
     public function setImage(string $image, string $tag = 'latest')
@@ -19,12 +17,9 @@ class Container extends Instance
     /**
      * Add a new port to the container list.
      *
-     * @param  int  $containerPort
-     * @param  string  $protocol
-     * @param  string  $name
      * @return $this
      */
-    public function addPort(int $containerPort, string $protocol = 'TCP', string $name = null)
+    public function addPort(int $containerPort, string $protocol = 'TCP', ?string $name = null)
     {
         return $this->addToAttribute('ports', [
             'name' => $name,
@@ -51,10 +46,9 @@ class Container extends Instance
     /**
      * Batch-add multiple volume mounts.
      *
-     * @param  array  $volumes
      * @return $this
      */
-    public function addMountedVolumes(array $volumes)
+    public function addMountedVolumes(array $volumes): static
     {
         foreach ($volumes as $volume) {
             $this->addMountedVolume($volume);
@@ -66,7 +60,6 @@ class Container extends Instance
     /**
      * Set the mounted volumes.
      *
-     * @param  array  $volumes
      * @return $this
      */
     public function setMountedVolumes(array $volumes)
@@ -83,7 +76,6 @@ class Container extends Instance
     /**
      * Get the mounted volumes.
      *
-     * @param  bool  $asInstance
      * @return array
      */
     public function getMountedVolumes(bool $asInstance = true)
@@ -91,8 +83,8 @@ class Container extends Instance
         $mountedVolumes = $this->getAttribute('volumeMounts', []);
 
         if ($asInstance) {
-            foreach ($mountedVolumes as &$volume) {
-                $volume = new MountedVolume($volume);
+            foreach ($mountedVolumes as &$mountedVolume) {
+                $mountedVolume = new MountedVolume($mountedVolume);
             }
         }
 
@@ -102,9 +94,6 @@ class Container extends Instance
     /**
      * Add an env variable by using a secret reference to the container.
      *
-     * @param  string  $name
-     * @param  string  $secretName
-     * @param  string  $key
      * @return $this
      */
     public function addSecretKeyRef(string $name, string $secretName, string $key)
@@ -122,10 +111,9 @@ class Container extends Instance
     /**
      * Add multiple secret references to the container.
      *
-     * @param  array  $envsWithRefs
      * @return $this
      */
-    public function addSecretKeyRefs(array $envsWithRefs)
+    public function addSecretKeyRefs(array $envsWithRefs): static
     {
         foreach ($envsWithRefs as $envName => $refs) {
             $this->addSecretKeyRef($envName, ...$refs);
@@ -137,9 +125,6 @@ class Container extends Instance
     /**
      * Add an env variable by using a configmap reference to the container.
      *
-     * @param  string  $name
-     * @param  string  $cmName
-     * @param  string  $key
      * @return $this
      */
     public function addConfigMapRef(string $name, string $cmName, string $key)
@@ -157,10 +142,9 @@ class Container extends Instance
     /**
      * Add multiple configmap references to the container.
      *
-     * @param  array  $envsWithRefs
      * @return $this
      */
-    public function addConfigMapRefs(array $envsWithRefs)
+    public function addConfigMapRefs(array $envsWithRefs): static
     {
         foreach ($envsWithRefs as $envName => $refs) {
             $this->addConfigMapRef($envName, ...$refs);
@@ -172,7 +156,6 @@ class Container extends Instance
     /**
      * Add an env variable by using a field reference to the container.
      *
-     * @param  string  $name
      * @param  string  $cmName
      * @param  string  $key
      * @return $this
@@ -191,10 +174,9 @@ class Container extends Instance
     /**
      * Add multiple field references to the container.
      *
-     * @param  array  $envsWithRefs
      * @return $this
      */
-    public function addFieldRefs(array $envsWithRefs)
+    public function addFieldRefs(array $envsWithRefs): static
     {
         foreach ($envsWithRefs as $envName => $refs) {
             $this->addFieldRef($envName, ...$refs);
@@ -206,7 +188,6 @@ class Container extends Instance
     /**
      * Add an env variable to the container.
      *
-     * @param  string  $name
      * @param  mixed  $value
      * @return $this
      */
@@ -223,10 +204,9 @@ class Container extends Instance
     /**
      * Batch-add a list of envs.
      *
-     * @param  array  $envs
      * @return $this
      */
-    public function addEnvs(array $envs)
+    public function addEnvs(array $envs): static
     {
         foreach ($envs as $name => $value) {
             $this->addEnv($name, $value);
@@ -238,12 +218,11 @@ class Container extends Instance
     /**
      * Set the environments.
      *
-     * @param  array  $envs
      * @return $this
      */
     public function setEnv(array $envs)
     {
-        $envs = collect($envs)->map(function ($value, $name) {
+        $envs = collect($envs)->map(function ($value, $name): array {
             // If a valuFrom is encountered, add it under valueFrom instead.
             if (is_array($value) && array_key_exists('valueFrom', $value)) {
                 return ['name' => $name, 'valueFrom' => $value['valueFrom']];
@@ -258,8 +237,6 @@ class Container extends Instance
     /**
      * Requests minimum memory for the container.
      *
-     * @param  int  $size
-     * @param  string  $measure
      * @return $this
      */
     public function minMemory(int $size, string $measure = 'Gi')
@@ -274,13 +251,12 @@ class Container extends Instance
      */
     public function getMinMemory()
     {
-        return $this->getAttribute('resources.requests.memory', null);
+        return $this->getAttribute('resources.requests.memory');
     }
 
     /**
      * Requests minimum CPU for the container.
      *
-     * @param  string  $size
      * @return $this
      */
     public function minCpu(string $size)
@@ -295,14 +271,12 @@ class Container extends Instance
      */
     public function getMinCpu()
     {
-        return $this->getAttribute('resources.requests.cpu', null);
+        return $this->getAttribute('resources.requests.cpu');
     }
 
     /**
      * Sets max memory for the container.
      *
-     * @param  int  $size
-     * @param  string  $measure
      * @return $this
      */
     public function maxMemory(int $size, string $measure = 'Gi')
@@ -317,13 +291,12 @@ class Container extends Instance
      */
     public function getMaxMemory()
     {
-        return $this->getAttribute('resources.limits.memory', null);
+        return $this->getAttribute('resources.limits.memory');
     }
 
     /**
      * Sets max CPU for the container.
      *
-     * @param  string  $size
      * @return $this
      */
     public function maxCpu(string $size)
@@ -338,13 +311,12 @@ class Container extends Instance
      */
     public function getMaxCpu()
     {
-        return $this->getAttribute('resources.limits.cpu', null);
+        return $this->getAttribute('resources.limits.cpu');
     }
 
     /**
      * Set the readiness probe for the container.
      *
-     * @param  \RenokiCo\PhpK8s\Instances\Probe  $probe
      * @return $this
      */
     public function setReadinessProbe(Probe $probe)
@@ -355,12 +327,11 @@ class Container extends Instance
     /**
      * Get the readiness probe.
      *
-     * @param  bool  $asInstance
      * @return null|array|\RenokiCo\PhpK8s\Instances\Probe
      */
     public function getReadinessProbe(bool $asInstance = true)
     {
-        $probe = $this->getAttribute('readinessProbe', null);
+        $probe = $this->getAttribute('readinessProbe');
 
         if (! $probe) {
             return;
@@ -372,7 +343,6 @@ class Container extends Instance
     /**
      * Set the liveness probe for the container.
      *
-     * @param  \RenokiCo\PhpK8s\Instances\Probe  $probe
      * @return $this
      */
     public function setLivenessProbe(Probe $probe)
@@ -383,12 +353,11 @@ class Container extends Instance
     /**
      * Get the liveness probe.
      *
-     * @param  bool  $asInstance
      * @return null|array|\RenokiCo\PhpK8s\Instances\Probe
      */
     public function getLivenessProbe(bool $asInstance = true)
     {
-        $probe = $this->getAttribute('livenessProbe', null);
+        $probe = $this->getAttribute('livenessProbe');
 
         if (! $probe) {
             return;
@@ -400,7 +369,6 @@ class Container extends Instance
     /**
      * Set the startup probe for the container.
      *
-     * @param  \RenokiCo\PhpK8s\Instances\Probe  $probe
      * @return $this
      */
     public function setStartupProbe(Probe $probe)
@@ -411,12 +379,11 @@ class Container extends Instance
     /**
      * Get the startup probe.
      *
-     * @param  bool  $asInstance
      * @return null|array|\RenokiCo\PhpK8s\Instances\Probe
      */
     public function getStartupProbe(bool $asInstance = true)
     {
-        $probe = $this->getAttribute('startupProbe', null);
+        $probe = $this->getAttribute('startupProbe');
 
         if (! $probe) {
             return;
@@ -427,8 +394,6 @@ class Container extends Instance
 
     /**
      * Check if the container is ready.
-     *
-     * @return bool
      */
     public function isReady(): bool
     {

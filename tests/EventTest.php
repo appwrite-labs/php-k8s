@@ -9,7 +9,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class EventTest extends TestCase
 {
-    public function test_event_api_interaction()
+    public function test_event_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -19,7 +19,7 @@ class EventTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -30,7 +30,7 @@ class EventTest extends TestCase
             ->addPort(3307, 'TCP', 'mysql-alt')
             ->setEnv(['MYSQL_ROOT_PASSWORD' => 'test']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setLabels(['tier' => 'backend', 'deployment-name' => 'mysql'])
             ->setContainers([$mysql]);
@@ -43,7 +43,7 @@ class EventTest extends TestCase
             ->setReplicas(1)
             ->setUpdateStrategy('RollingUpdate')
             ->setMinReadySeconds(0)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
         $dep = $dep->createOrUpdate();
 
@@ -63,49 +63,47 @@ class EventTest extends TestCase
 
         $this->assertInstanceOf(K8sEvent::class, $event);
 
-        $matchedEvent = $dep->getEvents()->first(function ($ev) use ($event) {
-            return $ev->getName() === $event->getName();
-        });
+        $matchedEvent = $dep->getEvents()->first(fn($ev): bool => $ev->getName() === $event->getName());
 
         $this->assertInstanceOf(K8sEvent::class, $matchedEvent);
         $this->assertTrue($matchedEvent->is($event));
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $events = $this->cluster->getAllEvents();
+        $allEvents = $this->cluster->getAllEvents();
 
-        $this->assertInstanceOf(ResourcesList::class, $events);
+        $this->assertInstanceOf(ResourcesList::class, $allEvents);
 
-        foreach ($events as $ev) {
-            $this->assertInstanceOf(K8sEvent::class, $ev);
+        foreach ($allEvents as $allEvent) {
+            $this->assertInstanceOf(K8sEvent::class, $allEvent);
 
-            $this->assertNotNull($ev->getName());
+            $this->assertNotNull($allEvent->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $event = $this->cluster->getEventByName('mysql-test');
+        $k8sEvent = $this->cluster->getEventByName('mysql-test');
 
-        $this->assertInstanceOf(K8sEvent::class, $event);
+        $this->assertInstanceOf(K8sEvent::class, $k8sEvent);
 
-        $this->assertTrue($event->isSynced());
+        $this->assertTrue($k8sEvent->isSynced());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $event = $this->cluster->getEventByName('mysql-test');
+        $k8sEvent = $this->cluster->getEventByName('mysql-test');
 
-        $this->assertTrue($event->delete());
+        $this->assertTrue($k8sEvent->delete());
 
-        while ($event->exists()) {
-            dump("Awaiting for horizontal pod autoscaler {$event->getName()} to be deleted...");
+        while ($k8sEvent->exists()) {
+            dump(sprintf('Awaiting for horizontal pod autoscaler %s to be deleted...', $k8sEvent->getName()));
             sleep(1);
         }
 
-        while ($event->exists()) {
-            dump("Awaiting for event {$event->getName()} to be deleted...");
+        while ($k8sEvent->exists()) {
+            dump(sprintf('Awaiting for event %s to be deleted...', $k8sEvent->getName()));
             sleep(1);
         }
 
@@ -114,7 +112,7 @@ class EventTest extends TestCase
         $this->cluster->getEventByName('mysql-test');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->event()->watchAll(function ($type, $event) {
             if ($event->getName() === 'mysql-test') {
@@ -125,11 +123,9 @@ class EventTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->event()->watchByName('mysql-test', function ($type, $event) {
-            return $event->getName() === 'mysql-test';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->event()->watchByName('mysql-test', fn($type, $event): bool => $event->getName() === 'mysql-test', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

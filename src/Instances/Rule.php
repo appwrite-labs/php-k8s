@@ -7,7 +7,6 @@ class Rule extends Instance
     /**
      * Add a new API Group.
      *
-     * @param  string  $apiGroup
      * @return $this
      */
     public function addApiGroup(string $apiGroup)
@@ -18,10 +17,10 @@ class Rule extends Instance
     /**
      * Batch-add multiple API groups.
      *
-     * @param  array  $apiGroups
+     * @param string[] $apiGroups
      * @return $this
      */
-    public function addApiGroups(array $apiGroups)
+    public function addApiGroups(array $apiGroups): static
     {
         foreach ($apiGroups as $apiGroup) {
             $this->addApiGroup($apiGroup);
@@ -35,7 +34,7 @@ class Rule extends Instance
      *
      * @return $this
      */
-    public function core()
+    public function core(): static
     {
         return $this->addApiGroups(['']);
     }
@@ -43,7 +42,6 @@ class Rule extends Instance
     /**
      * Add a new resource to the list.
      *
-     * @param  string  $resource
      * @return $this
      */
     public function addResource(string $resource)
@@ -58,10 +56,9 @@ class Rule extends Instance
     /**
      * Batch-add multiple resources.
      *
-     * @param  array  $resources
      * @return $this
      */
-    public function addResources(array $resources)
+    public function addResources(array $resources): static
     {
         foreach ($resources as $resource) {
             $this->addResource($resource);
@@ -73,7 +70,6 @@ class Rule extends Instance
     /**
      * Add a new resource name to the list.
      *
-     * @param  string  $name
      * @return $this
      */
     public function addResourceName(string $name)
@@ -87,10 +83,10 @@ class Rule extends Instance
      * @param  array  $resources
      * @return $this
      */
-    public function addResourceNames(array $resourceNames)
+    public function addResourceNames(array $resourceNames): static
     {
-        foreach ($resourceNames as $name) {
-            $this->addResourceName($name);
+        foreach ($resourceNames as $resourceName) {
+            $this->addResourceName($resourceName);
         }
 
         return $this;
@@ -99,7 +95,6 @@ class Rule extends Instance
     /**
      * Add a new verb to the list.
      *
-     * @param  string  $verb
      * @return $this
      */
     public function addVerb(string $verb)
@@ -110,10 +105,9 @@ class Rule extends Instance
     /**
      * Batch-add multiple verbs.
      *
-     * @param  array  $verbs
      * @return $this
      */
-    public function addVerbs(array $verbs)
+    public function addVerbs(array $verbs): static
     {
         foreach ($verbs as $verb) {
             $this->addVerb($verb);

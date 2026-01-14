@@ -29,9 +29,6 @@ trait MakesWebsocketCalls
     /**
      * Get a WS-ready client for the Cluster.
      * Returns the React Event Loop and the WS connector as an array.
-     *
-     * @param  string  $url
-     * @return array
      */
     public function getWsClient(string $url): array
     {
@@ -52,7 +49,7 @@ trait MakesWebsocketCalls
         }
 
         if ($this->token) {
-            $headers['Authorization'] = "Bearer {$this->token}";
+            $headers['Authorization'] = 'Bearer ' . $this->token;
         } elseif ($this->auth) {
             $headers['Authorization'] = 'Basic '.base64_encode(implode(':', $this->auth));
         }
@@ -78,7 +75,6 @@ trait MakesWebsocketCalls
     /**
      * Create a new socket connection as stream context.
      *
-     * @param  string  $callableUrl
      * @return resource
      */
     protected function createSocketConnection(string $callableUrl)
@@ -94,13 +90,11 @@ trait MakesWebsocketCalls
 
     /**
      * Build the stream context options for socket connections.
-     *
-     * @return array
      */
     protected function buildStreamContextOptions(): array
     {
-        $sslOptions = $headers = [];
-
+        $sslOptions = [];
+        $headers = [];
         if (is_bool($this->verify)) {
             $sslOptions['verify_peer'] = $this->verify;
             $sslOptions['verify_peer_name'] = $this->verify;
@@ -109,7 +103,7 @@ trait MakesWebsocketCalls
         }
 
         if ($this->token) {
-            $headers[] = "Authorization: Bearer {$this->token}";
+            $headers[] = 'Authorization: Bearer ' . $this->token;
         } elseif ($this->auth) {
             $headers[] = 'Authorization: Basic '.base64_encode(implode(':', $this->auth));
         }
@@ -122,7 +116,7 @@ trait MakesWebsocketCalls
             $sslOptions['local_pk'] = $this->sslKey;
         }
 
-        if (empty($sslOptions) && empty($headers)) {
+        if ($sslOptions === [] && $headers === []) {
             return [];
         }
 
@@ -138,12 +132,9 @@ trait MakesWebsocketCalls
      * Send a WS request over upgraded connection.
      * Returns a list of messages received from the connection.
      *
-     * @param  string  $path
-     * @param  Closure|null  $callback
-     * @param  array  $query
-     * @return mixed
+     * @return array{channel: mixed, output: string}[]
      */
-    protected function makeWsRequest(string $path, Closure $callback = null, array $query = ['pretty' => 1])
+    protected function makeWsRequest(string $path, ?Closure $callback = null, array $query = ['pretty' => 1]): array
     {
         $url = $this->getCallableUrl($path, $query);
 
@@ -165,15 +156,15 @@ trait MakesWebsocketCalls
 
         $messages = [];
 
-        if ($callback) {
-            $ws->then(function ($connection) use ($callback) {
+        if ($callback instanceof \Closure) {
+            $ws->then(function ($connection) use ($callback): void {
                 $callback($connection);
             });
         } else {
-            $ws->then(function ($connection) use (&$externalConnection, &$messages) {
+            $ws->then(function ($connection) use (&$externalConnection, &$messages): void {
                 $externalConnection = $connection;
 
-                $connection->on('message', function ($message) use (&$messages) {
+                $connection->on('message', function ($message) use (&$messages): void {
                     $data = $message->getPayload();
 
                     $channel = static::$stdChannels[substr($data, 0, 1)];
@@ -184,8 +175,8 @@ trait MakesWebsocketCalls
                         'output' => $message,
                     ];
                 });
-            }, function (Exception $e) {
-                throw $e;
+            }, function (Exception $exception): void {
+                throw $exception;
             });
         }
 

@@ -10,7 +10,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class DaemonSetTest extends TestCase
 {
-    public function test_daemon_set_build()
+    public function test_daemon_set_build(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -19,27 +19,27 @@ class DaemonSetTest extends TestCase
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setContainers([$mysql]);
 
-        $ds = $this->cluster->daemonSet()
+        $k8sDaemonSet = $this->cluster->daemonSet()
             ->setName('mysql')
             ->setLabels(['tier' => 'backend'])
             ->setUpdateStrategy('RollingUpdate')
             ->setMinReadySeconds(0)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
-        $this->assertEquals('apps/v1', $ds->getApiVersion());
-        $this->assertEquals('mysql', $ds->getName());
-        $this->assertEquals(['tier' => 'backend'], $ds->getLabels());
-        $this->assertEquals(0, $ds->getMinReadySeconds());
-        $this->assertEquals($pod->getName(), $ds->getTemplate()->getName());
+        $this->assertEquals('apps/v1', $k8sDaemonSet->getApiVersion());
+        $this->assertEquals('mysql', $k8sDaemonSet->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sDaemonSet->getLabels());
+        $this->assertEquals(0, $k8sDaemonSet->getMinReadySeconds());
+        $this->assertEquals($k8sPod->getName(), $k8sDaemonSet->getTemplate()->getName());
 
-        $this->assertInstanceOf(K8sPod::class, $ds->getTemplate());
+        $this->assertInstanceOf(K8sPod::class, $k8sDaemonSet->getTemplate());
     }
 
-    public function test_daemon_set_from_yaml()
+    public function test_daemon_set_from_yaml(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -48,7 +48,7 @@ class DaemonSetTest extends TestCase
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setContainers([$mysql]);
 
@@ -57,12 +57,12 @@ class DaemonSetTest extends TestCase
         $this->assertEquals('apps/v1', $ds->getApiVersion());
         $this->assertEquals('mysql', $ds->getName());
         $this->assertEquals(['tier' => 'backend'], $ds->getLabels());
-        $this->assertEquals($pod->getName(), $ds->getTemplate()->getName());
+        $this->assertEquals($k8sPod->getName(), $ds->getTemplate()->getName());
 
         $this->assertInstanceOf(K8sPod::class, $ds->getTemplate());
     }
 
-    public function test_daemon_set_api_interaction()
+    public function test_daemon_set_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -73,7 +73,7 @@ class DaemonSetTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $mysql = K8s::container()
             ->setName('mysql')
@@ -84,7 +84,7 @@ class DaemonSetTest extends TestCase
             ->addPort(3307, 'TCP', 'mysql-alt')
             ->setEnv(['MYSQL_ROOT_PASSWORD' => 'test']);
 
-        $pod = $this->cluster->pod()
+        $k8sPod = $this->cluster->pod()
             ->setName('mysql')
             ->setLabels(['tier' => 'backend', 'daemonset-name' => 'mysql'])
             ->setContainers([$mysql]);
@@ -95,7 +95,7 @@ class DaemonSetTest extends TestCase
             ->setSelectors(['matchLabels' => ['tier' => 'backend']])
             ->setUpdateStrategy('RollingUpdate')
             ->setMinReadySeconds(0)
-            ->setTemplate($pod);
+            ->setTemplate($k8sPod);
 
         $this->assertFalse($ds->isSynced());
         $this->assertFalse($ds->exists());
@@ -111,16 +111,16 @@ class DaemonSetTest extends TestCase
         $this->assertEquals('mysql', $ds->getName());
         $this->assertEquals(['tier' => 'backend'], $ds->getLabels());
         $this->assertEquals(0, $ds->getMinReadySeconds());
-        $this->assertEquals($pod->getName(), $ds->getTemplate()->getName());
+        $this->assertEquals($k8sPod->getName(), $ds->getTemplate()->getName());
 
         $this->assertInstanceOf(K8sPod::class, $ds->getTemplate());
 
         while (! $ds->allPodsAreRunning()) {
-            dump("Waiting for pods of {$ds->getName()} to be up and running...");
+            dump(sprintf('Waiting for pods of %s to be up and running...', $ds->getName()));
             sleep(1);
         }
 
-        K8sDaemonSet::selectPods(function ($ds) {
+        K8sDaemonSet::selectPods(function ($ds): array {
             $this->assertInstanceOf(K8sDaemonSet::class, $ds);
 
             return ['tier' => 'backend'];
@@ -141,13 +141,13 @@ class DaemonSetTest extends TestCase
         $ds->refresh();
 
         while ($ds->getReadyReplicasCount() === 0) {
-            dump("Waiting for pods of {$ds->getName()} to have ready replicas...");
+            dump(sprintf('Waiting for pods of %s to have ready replicas...', $ds->getName()));
             sleep(1);
             $ds->refresh();
         }
 
         while ($ds->getNodesCount() === 0) {
-            dump("Waiting for pods of {$ds->getName()} to get detected...");
+            dump(sprintf('Waiting for pods of %s to get detected...', $ds->getName()));
             sleep(1);
             $ds->refresh();
         }
@@ -162,64 +162,64 @@ class DaemonSetTest extends TestCase
         $this->assertTrue(is_array($ds->getConditions()));
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $daemonsets = $this->cluster->getAllDaemonSets();
+        $allDaemonSets = $this->cluster->getAllDaemonSets();
 
-        $this->assertInstanceOf(ResourcesList::class, $daemonsets);
+        $this->assertInstanceOf(ResourcesList::class, $allDaemonSets);
 
-        foreach ($daemonsets as $ds) {
-            $this->assertInstanceOf(K8sDaemonSet::class, $ds);
+        foreach ($allDaemonSets as $allDaemonSet) {
+            $this->assertInstanceOf(K8sDaemonSet::class, $allDaemonSet);
 
-            $this->assertNotNull($ds->getName());
+            $this->assertNotNull($allDaemonSet->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $ds = $this->cluster->getDaemonSetByName('mysql');
+        $k8sDaemonSet = $this->cluster->getDaemonSetByName('mysql');
 
-        $this->assertInstanceOf(K8sDaemonSet::class, $ds);
+        $this->assertInstanceOf(K8sDaemonSet::class, $k8sDaemonSet);
 
-        $this->assertTrue($ds->isSynced());
+        $this->assertTrue($k8sDaemonSet->isSynced());
 
-        $this->assertEquals('apps/v1', $ds->getApiVersion());
-        $this->assertEquals('mysql', $ds->getName());
-        $this->assertEquals(['tier' => 'backend'], $ds->getLabels());
+        $this->assertEquals('apps/v1', $k8sDaemonSet->getApiVersion());
+        $this->assertEquals('mysql', $k8sDaemonSet->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sDaemonSet->getLabels());
 
-        $this->assertInstanceOf(K8sPod::class, $ds->getTemplate());
+        $this->assertInstanceOf(K8sPod::class, $k8sDaemonSet->getTemplate());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $ds = $this->cluster->getDaemonSetByName('mysql');
+        $k8sDaemonSet = $this->cluster->getDaemonSetByName('mysql');
 
-        $this->assertTrue($ds->isSynced());
+        $this->assertTrue($k8sDaemonSet->isSynced());
 
-        $ds->createOrUpdate();
+        $k8sDaemonSet->createOrUpdate();
 
-        $this->assertTrue($ds->isSynced());
+        $this->assertTrue($k8sDaemonSet->isSynced());
 
-        $this->assertEquals('apps/v1', $ds->getApiVersion());
-        $this->assertEquals('mysql', $ds->getName());
-        $this->assertEquals(['tier' => 'backend'], $ds->getLabels());
+        $this->assertEquals('apps/v1', $k8sDaemonSet->getApiVersion());
+        $this->assertEquals('mysql', $k8sDaemonSet->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sDaemonSet->getLabels());
 
-        $this->assertInstanceOf(K8sPod::class, $ds->getTemplate());
+        $this->assertInstanceOf(K8sPod::class, $k8sDaemonSet->getTemplate());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $ds = $this->cluster->getDaemonSetByName('mysql');
+        $k8sDaemonSet = $this->cluster->getDaemonSetByName('mysql');
 
-        $this->assertTrue($ds->delete());
+        $this->assertTrue($k8sDaemonSet->delete());
 
-        while ($ds->exists()) {
-            dump("Awaiting for daemonSet {$ds->getName()} to be deleted...");
+        while ($k8sDaemonSet->exists()) {
+            dump(sprintf('Awaiting for daemonSet %s to be deleted...', $k8sDaemonSet->getName()));
             sleep(1);
         }
 
-        while ($ds->getPods()->count() > 0) {
-            dump("Awaiting for daemonset {$ds->getName()}'s pods to be deleted...");
+        while ($k8sDaemonSet->getPods()->count() > 0) {
+            dump(sprintf("Awaiting for daemonset %s's pods to be deleted...", $k8sDaemonSet->getName()));
             sleep(1);
         }
 
@@ -228,7 +228,7 @@ class DaemonSetTest extends TestCase
         $this->cluster->getDaemonSetByName('mysql');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->daemonSet()->watchAll(function ($type, $ds) {
             if ($ds->getName() === 'mysql') {
@@ -239,11 +239,9 @@ class DaemonSetTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->daemonSet()->watchByName('mysql', function ($type, $ds) {
-            return $ds->getName() === 'mysql';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->daemonSet()->watchByName('mysql', fn($type, $ds): bool => $ds->getName() === 'mysql', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

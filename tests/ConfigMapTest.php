@@ -8,9 +8,9 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class ConfigMapTest extends TestCase
 {
-    public function test_config_map_build()
+    public function test_config_map_build(): void
     {
-        $cm = $this->cluster->configmap()
+        $k8sConfigMap = $this->cluster->configmap()
             ->setName('settings')
             ->setLabels(['tier' => 'backend'])
             ->setData(['somekey' => 'somevalue'])
@@ -18,14 +18,14 @@ class ConfigMapTest extends TestCase
             ->removeData('somekey')
             ->immutable();
 
-        $this->assertEquals('v1', $cm->getApiVersion());
-        $this->assertEquals('settings', $cm->getName());
-        $this->assertEquals(['tier' => 'backend'], $cm->getLabels());
-        $this->assertEquals(['key2' => 'val2'], $cm->getData());
-        $this->assertTrue($cm->isImmutable());
+        $this->assertEquals('v1', $k8sConfigMap->getApiVersion());
+        $this->assertEquals('settings', $k8sConfigMap->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sConfigMap->getLabels());
+        $this->assertEquals(['key2' => 'val2'], $k8sConfigMap->getData());
+        $this->assertTrue($k8sConfigMap->isImmutable());
     }
 
-    public function test_config_map_from_yaml()
+    public function test_config_map_from_yaml(): void
     {
         $cm = $this->cluster->fromYamlFile(__DIR__.'/yaml/configmap.yaml');
 
@@ -36,7 +36,7 @@ class ConfigMapTest extends TestCase
         $this->assertTrue($cm->isImmutable());
     }
 
-    public function test_config_map_api_interaction()
+    public function test_config_map_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -47,9 +47,9 @@ class ConfigMapTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function test_immutability()
+    public function test_immutability(): void
     {
-        $cm = $this->cluster->configmap()
+        $k8sConfigMap = $this->cluster->configmap()
             ->setName('settings')
             ->setLabels(['tier' => 'backend'])
             ->setData(['somekey' => 'somevalue'])
@@ -57,16 +57,16 @@ class ConfigMapTest extends TestCase
             ->removeData('somekey')
             ->immutable();
 
-        $cm->createOrUpdate();
+        $k8sConfigMap->createOrUpdate();
 
-        $cm->refresh();
+        $k8sConfigMap->refresh();
 
-        $this->assertTrue($cm->isImmutable());
+        $this->assertTrue($k8sConfigMap->isImmutable());
 
-        $cm->delete();
+        $k8sConfigMap->delete();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $cm = $this->cluster->configmap()
             ->setName('settings')
@@ -92,61 +92,61 @@ class ConfigMapTest extends TestCase
         $this->assertEquals('val2', $cm->getData('key2'));
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $configmaps = $this->cluster->getAllConfigmaps();
+        $allConfigmaps = $this->cluster->getAllConfigmaps();
 
-        $this->assertInstanceOf(ResourcesList::class, $configmaps);
+        $this->assertInstanceOf(ResourcesList::class, $allConfigmaps);
 
-        foreach ($configmaps as $cm) {
-            $this->assertInstanceOf(K8sConfigMap::class, $cm);
+        foreach ($allConfigmaps as $allConfigmap) {
+            $this->assertInstanceOf(K8sConfigMap::class, $allConfigmap);
 
-            $this->assertNotNull($cm->getName());
+            $this->assertNotNull($allConfigmap->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
-        $cm = $this->cluster->getConfigmapByName('settings');
+        $k8sConfigMap = $this->cluster->getConfigmapByName('settings');
 
-        $this->assertInstanceOf(K8sConfigMap::class, $cm);
+        $this->assertInstanceOf(K8sConfigMap::class, $k8sConfigMap);
 
-        $this->assertTrue($cm->isSynced());
+        $this->assertTrue($k8sConfigMap->isSynced());
 
-        $this->assertEquals('v1', $cm->getApiVersion());
-        $this->assertEquals('settings', $cm->getName());
-        $this->assertEquals(['tier' => 'backend'], $cm->getLabels());
-        $this->assertEquals(['key2' => 'val2'], $cm->getData());
-        $this->assertEquals('val2', $cm->getData('key2'));
+        $this->assertEquals('v1', $k8sConfigMap->getApiVersion());
+        $this->assertEquals('settings', $k8sConfigMap->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sConfigMap->getLabels());
+        $this->assertEquals(['key2' => 'val2'], $k8sConfigMap->getData());
+        $this->assertEquals('val2', $k8sConfigMap->getData('key2'));
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $cm = $this->cluster->getConfigmapByName('settings');
+        $k8sConfigMap = $this->cluster->getConfigmapByName('settings');
 
-        $this->assertTrue($cm->isSynced());
+        $this->assertTrue($k8sConfigMap->isSynced());
 
-        $cm->removeData('key2')
+        $k8sConfigMap->removeData('key2')
             ->addData('newkey', 'newval');
 
-        $cm->createOrUpdate();
+        $k8sConfigMap->createOrUpdate();
 
-        $this->assertTrue($cm->isSynced());
+        $this->assertTrue($k8sConfigMap->isSynced());
 
-        $this->assertEquals('v1', $cm->getApiVersion());
-        $this->assertEquals('settings', $cm->getName());
-        $this->assertEquals(['tier' => 'backend'], $cm->getLabels());
-        $this->assertEquals(['newkey' => 'newval'], $cm->getData());
-        $this->assertEquals('newval', $cm->getData('newkey'));
+        $this->assertEquals('v1', $k8sConfigMap->getApiVersion());
+        $this->assertEquals('settings', $k8sConfigMap->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sConfigMap->getLabels());
+        $this->assertEquals(['newkey' => 'newval'], $k8sConfigMap->getData());
+        $this->assertEquals('newval', $k8sConfigMap->getData('newkey'));
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $cm = $this->cluster->getConfigmapByName('settings');
+        $k8sConfigMap = $this->cluster->getConfigmapByName('settings');
 
-        $this->assertTrue($cm->delete());
+        $this->assertTrue($k8sConfigMap->delete());
 
-        while ($cm->exists()) {
+        while ($k8sConfigMap->exists()) {
             sleep(1);
         }
 
@@ -155,7 +155,7 @@ class ConfigMapTest extends TestCase
         $this->cluster->getConfigmapByName('settings');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->configmap()->watchAll(function ($type, $configmap) {
             if ($configmap->getName() === 'settings') {
@@ -166,11 +166,9 @@ class ConfigMapTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->configmap()->watchByName('settings', function ($type, $configmap) {
-            return $configmap->getName() === 'settings';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->configmap()->watchByName('settings', fn($type, $configmap): bool => $configmap->getName() === 'settings', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }

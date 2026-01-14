@@ -10,7 +10,7 @@ use RenokiCo\PhpK8s\ResourcesList;
 
 class RoleTest extends TestCase
 {
-    public function test_role_build()
+    public function test_role_build(): void
     {
         $rule = K8s::rule()
             ->core()
@@ -18,18 +18,18 @@ class RoleTest extends TestCase
             ->addResourceNames(['pod-name', 'configmap-name'])
             ->addVerbs(['get', 'list', 'watch']);
 
-        $role = $this->cluster->role()
+        $k8sRole = $this->cluster->role()
             ->setName('admin')
             ->setLabels(['tier' => 'backend'])
             ->addRules([$rule]);
 
-        $this->assertEquals('rbac.authorization.k8s.io/v1', $role->getApiVersion());
-        $this->assertEquals('admin', $role->getName());
-        $this->assertEquals(['tier' => 'backend'], $role->getLabels());
-        $this->assertEquals([$rule], $role->getRules());
+        $this->assertEquals('rbac.authorization.k8s.io/v1', $k8sRole->getApiVersion());
+        $this->assertEquals('admin', $k8sRole->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sRole->getLabels());
+        $this->assertEquals([$rule], $k8sRole->getRules());
     }
 
-    public function test_role_from_yaml()
+    public function test_role_from_yaml(): void
     {
         $rule = K8s::rule()
             ->core()
@@ -45,7 +45,7 @@ class RoleTest extends TestCase
         $this->assertEquals([$rule], $role->getRules());
     }
 
-    public function test_role_api_interaction()
+    public function test_role_api_interaction(): void
     {
         $this->runCreationTests();
         $this->runGetAllTests();
@@ -56,7 +56,7 @@ class RoleTest extends TestCase
         $this->runDeletionTests();
     }
 
-    public function runCreationTests()
+    public function runCreationTests(): void
     {
         $rule = K8s::rule()
             ->core()
@@ -85,20 +85,20 @@ class RoleTest extends TestCase
         $this->assertEquals([$rule], $role->getRules());
     }
 
-    public function runGetAllTests()
+    public function runGetAllTests(): void
     {
-        $roles = $this->cluster->getAllRoles();
+        $allRoles = $this->cluster->getAllRoles();
 
-        $this->assertInstanceOf(ResourcesList::class, $roles);
+        $this->assertInstanceOf(ResourcesList::class, $allRoles);
 
-        foreach ($roles as $role) {
-            $this->assertInstanceOf(K8sRole::class, $role);
+        foreach ($allRoles as $allRole) {
+            $this->assertInstanceOf(K8sRole::class, $allRole);
 
-            $this->assertNotNull($role->getName());
+            $this->assertNotNull($allRole->getName());
         }
     }
 
-    public function runGetTests()
+    public function runGetTests(): void
     {
         $rule = K8s::rule()
             ->core()
@@ -106,21 +106,21 @@ class RoleTest extends TestCase
             ->addResourceNames(['pod-name', 'configmap-name'])
             ->addVerbs(['get', 'list', 'watch']);
 
-        $role = $this->cluster->getRoleByName('admin');
+        $k8sRole = $this->cluster->getRoleByName('admin');
 
-        $this->assertInstanceOf(K8sRole::class, $role);
+        $this->assertInstanceOf(K8sRole::class, $k8sRole);
 
-        $this->assertTrue($role->isSynced());
+        $this->assertTrue($k8sRole->isSynced());
 
-        $this->assertEquals('rbac.authorization.k8s.io/v1', $role->getApiVersion());
-        $this->assertEquals('admin', $role->getName());
-        $this->assertEquals(['tier' => 'backend'], $role->getLabels());
-        $this->assertEquals([$rule], $role->getRules());
+        $this->assertEquals('rbac.authorization.k8s.io/v1', $k8sRole->getApiVersion());
+        $this->assertEquals('admin', $k8sRole->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sRole->getLabels());
+        $this->assertEquals([$rule], $k8sRole->getRules());
     }
 
-    public function runUpdateTests()
+    public function runUpdateTests(): void
     {
-        $role = $this->cluster->getRoleByName('admin');
+        $k8sRole = $this->cluster->getRoleByName('admin');
 
         $rule = K8s::rule()
             ->core()
@@ -128,27 +128,27 @@ class RoleTest extends TestCase
             ->addResourceNames(['pod-name'])
             ->addVerbs(['get', 'list']);
 
-        $this->assertTrue($role->isSynced());
+        $this->assertTrue($k8sRole->isSynced());
 
-        $role->setRules([$rule]);
+        $k8sRole->setRules([$rule]);
 
-        $role->createOrUpdate();
+        $k8sRole->createOrUpdate();
 
-        $this->assertTrue($role->isSynced());
+        $this->assertTrue($k8sRole->isSynced());
 
-        $this->assertEquals('rbac.authorization.k8s.io/v1', $role->getApiVersion());
-        $this->assertEquals('admin', $role->getName());
-        $this->assertEquals(['tier' => 'backend'], $role->getLabels());
-        $this->assertEquals([$rule], $role->getRules());
+        $this->assertEquals('rbac.authorization.k8s.io/v1', $k8sRole->getApiVersion());
+        $this->assertEquals('admin', $k8sRole->getName());
+        $this->assertEquals(['tier' => 'backend'], $k8sRole->getLabels());
+        $this->assertEquals([$rule], $k8sRole->getRules());
     }
 
-    public function runDeletionTests()
+    public function runDeletionTests(): void
     {
-        $role = $this->cluster->getRoleByName('admin');
+        $k8sRole = $this->cluster->getRoleByName('admin');
 
-        $this->assertTrue($role->delete());
+        $this->assertTrue($k8sRole->delete());
 
-        while ($role->exists()) {
+        while ($k8sRole->exists()) {
             sleep(1);
         }
 
@@ -157,7 +157,7 @@ class RoleTest extends TestCase
         $this->cluster->getRoleByName('admin');
     }
 
-    public function runWatchAllTests()
+    public function runWatchAllTests(): void
     {
         $watch = $this->cluster->role()->watchAll(function ($type, $role) {
             if ($role->getName() === 'admin') {
@@ -168,11 +168,9 @@ class RoleTest extends TestCase
         $this->assertTrue($watch);
     }
 
-    public function runWatchTests()
+    public function runWatchTests(): void
     {
-        $watch = $this->cluster->role()->watchByName('admin', function ($type, $role) {
-            return $role->getName() === 'admin';
-        }, ['timeoutSeconds' => 10]);
+        $watch = $this->cluster->role()->watchByName('admin', fn($type, $role): bool => $role->getName() === 'admin', ['timeoutSeconds' => 10]);
 
         $this->assertTrue($watch);
     }
