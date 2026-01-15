@@ -183,7 +183,7 @@ class KubernetesCluster
             Operation::APPLY => $this->applyPath($path, $payload, $query),
             Operation::JSON_PATCH => $this->jsonPatchPath($path, $payload, $query),
             Operation::JSON_MERGE_PATCH => $this->jsonMergePatchPath($path, $payload, $query),
-            default => $this->makeRequest($operation->httpMethod(), $path, $payload, $query),
+            default => $this->makeRequest($operation, $path, $payload, $query),
         };
     }
 
@@ -351,7 +351,7 @@ class KubernetesCluster
         array $query = ['pretty' => 1, 'stdin' => 1, 'stdout' => 1, 'stderr' => 1, 'tty' => 1]
     ): mixed {
         try {
-            return $this->makeRequest(Operation::EXEC->httpMethod(), $path, '', $query);
+            return $this->makeRequest(Operation::EXEC, $path, '', $query);
         } catch (KubernetesAPIException $e) {
             $payload = $e->getPayload();
 
@@ -380,7 +380,7 @@ class KubernetesCluster
         array $query = ['pretty' => 1, 'stdin' => 1, 'stdout' => 1, 'stderr' => 1, 'tty' => 1]
     ): mixed {
         try {
-            return $this->makeRequest(Operation::ATTACH->httpMethod(), $path, '', $query);
+            return $this->makeRequest(Operation::ATTACH, $path, '', $query);
         } catch (KubernetesAPIException $e) {
             $payload = $e->getPayload();
 
@@ -411,7 +411,7 @@ class KubernetesCluster
             ],
         ];
 
-        return $this->makeRequest(Operation::APPLY->httpMethod(), $path, $payload, $query, $options);
+        return $this->makeRequest(Operation::APPLY, $path, $payload, $query, $options);
     }
 
     /**
@@ -428,7 +428,7 @@ class KubernetesCluster
             ],
         ];
 
-        return $this->makeRequest(Operation::JSON_PATCH->httpMethod(), $path, $payload, $query, $options);
+        return $this->makeRequest(Operation::JSON_PATCH, $path, $payload, $query, $options);
     }
 
     /**
@@ -445,7 +445,7 @@ class KubernetesCluster
             ],
         ];
 
-        return $this->makeRequest(Operation::JSON_MERGE_PATCH->httpMethod(), $path, $payload, $query, $options);
+        return $this->makeRequest(Operation::JSON_MERGE_PATCH, $path, $payload, $query, $options);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace RenokiCo\PhpK8s\Traits\Cluster;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\RequestOptions;
+use RenokiCo\PhpK8s\Enums\Operation;
 use RenokiCo\PhpK8s\Exceptions\KubernetesAPIException;
 use RenokiCo\PhpK8s\ResourcesList;
 
@@ -146,17 +147,22 @@ trait MakesHttpCalls
     }
 
     /**
-     * Call the API with the specified method and path.
+     * Call the API with the specified operation and path.
      *
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
-    protected function makeRequest(string $method, string $path, string $payload = '', array $query = ['pretty' => 1], array $options = [])
+    protected function makeRequest(Operation $operation, string $path, string $payload = '', array $query = ['pretty' => 1], array $options = [])
     {
         $resourceClass = $this->resourceClass;
 
+        $method = $operation->httpMethod();
         $response = $this->call($method, $path, $payload, $query, $options);
+
+        if ($operation === Operation::LOG) {
+            return (string) $response->getBody();
+        }
 
         $json = @json_decode($response->getBody(), true);
 
