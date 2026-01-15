@@ -184,7 +184,7 @@ trait MakesHttpCalls
                 $results[] = (new $resourceClass($this, $item))->synced();
             }
 
-            return new ResourcesList($results);
+            return ResourcesList::fromResponse($results, $json['metadata'] ?? []);
         }
 
         // If the items does not exist, it means the Kind
