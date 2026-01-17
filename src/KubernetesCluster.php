@@ -132,6 +132,7 @@ class KubernetesCluster
     use Traits\Cluster\ChecksClusterVersion;
     use Traits\Cluster\LoadsFromKubeConfig;
     use Traits\Cluster\MakesHttpCalls;
+    use Traits\Cluster\MakesWatchCalls;
     use Traits\Cluster\MakesWebsocketCalls;
 
     /**
@@ -176,8 +177,8 @@ class KubernetesCluster
         }
 
         return match ($operation) {
-            Operation::WATCH => $this->watchPath($path, $payload, $query),
-            Operation::WATCH_LOGS => $this->watchLogsPath($path, $payload, $query),
+            Operation::WATCH => $this->runWatchOperation($this->watchPath($path, $payload, $query)),
+            Operation::WATCH_LOGS => $this->runWatchOperation($this->watchLogsPath($path, $payload, $query)),
             Operation::EXEC => $this->execPath($path, $query),
             Operation::ATTACH => $this->attachPath($path, $payload, $query),
             Operation::APPLY => $this->applyPath($path, $payload, $query),
@@ -188,156 +189,22 @@ class KubernetesCluster
     }
 
     /**
-     * Watch for the current resource or a resource list.
+     * Run a watch operation and return the result.
      *
-     * @return mixed|null
+     * @param  array{0: \React\EventLoop\LoopInterface, 1: \React\Promise\PromiseInterface}  $loopAndPromise
      */
-    protected function watchPath(string $path, Closure $callback, array $query = ['pretty' => 1]): mixed
+    protected function runWatchOperation(array $loopAndPromise): mixed
     {
-        $resourceClass = $this->resourceClass;
-        $sock = $this->createSocketConnection($this->getCallableUrl($path, $query));
+        [$loop, $promise] = $loopAndPromise;
 
-        if ($sock === false) {
-            return null;
-        }
+        $result = null;
+        $promise->then(function ($value) use (&$result) {
+            $result = $value;
+        });
 
-        // Set stream to non-blocking mode to allow timeout handling
-        stream_set_blocking($sock, false);
+        $loop->run();
 
-        // Calculate overall timeout: server timeout + buffer for network/processing
-        $timeout = ($query['timeoutSeconds'] ?? 30) + 5;
-        $endTime = time() + $timeout;
-
-        $buffer = '';
-
-        while (time() < $endTime) {
-            // Try to read data (non-blocking)
-            $chunk = fread($sock, 8192);
-
-            if ($chunk === false) {
-                // Error occurred
-                fclose($sock);
-
-                return null;
-            }
-
-            if ($chunk === '') {
-                // No data available, check if stream ended
-                if (feof($sock)) {
-                    break;
-                }
-
-                // No data yet, sleep briefly and continue
-                usleep(100000); // 100ms
-
-                continue;
-            }
-
-            // Append chunk to buffer
-            $buffer .= $chunk;
-
-            // Process complete lines from buffer
-            while (($pos = strpos($buffer, "\n")) !== false) {
-                $line = substr($buffer, 0, $pos);
-                $buffer = substr($buffer, $pos + 1);
-
-                if (trim($line) === '') {
-                    continue;
-                }
-
-                $data = @json_decode($line, true);
-
-                if (! $data || ! isset($data['type'], $data['object'])) {
-                    continue;
-                }
-
-                ['type' => $type, 'object' => $attributes] = $data;
-
-                $call = call_user_func(
-                    $callback,
-                    $type,
-                    new $resourceClass($this, $attributes)
-                );
-
-                if (! is_null($call)) {
-                    fclose($sock);
-
-                    return $call;
-                }
-            }
-        }
-
-        fclose($sock);
-
-        return null;
-    }
-
-    /**
-     * Watch for the logs for the resource.
-     *
-     * @return mixed|null
-     */
-    protected function watchLogsPath(string $path, Closure $callback, array $query = ['pretty' => 1]): mixed
-    {
-        $sock = $this->createSocketConnection($this->getCallableUrl($path, $query));
-
-        if ($sock === false) {
-            return null;
-        }
-
-        // Set stream to non-blocking mode to allow timeout handling
-        stream_set_blocking($sock, false);
-
-        // Calculate overall timeout: server timeout + buffer for network/processing
-        $timeout = ($query['timeoutSeconds'] ?? 30) + 5;
-        $endTime = time() + $timeout;
-
-        $buffer = '';
-
-        while (time() < $endTime) {
-            // Try to read data (non-blocking)
-            $chunk = fread($sock, 8192);
-
-            if ($chunk === false) {
-                // Error occurred
-                fclose($sock);
-
-                return null;
-            }
-
-            if ($chunk === '') {
-                // No data available, check if stream ended
-                if (feof($sock)) {
-                    break;
-                }
-
-                // No data yet, sleep briefly and continue
-                usleep(100000); // 100ms
-
-                continue;
-            }
-
-            // Append chunk to buffer
-            $buffer .= $chunk;
-
-            // Process complete lines from buffer
-            while (($pos = strpos($buffer, "\n")) !== false) {
-                $line = substr($buffer, 0, $pos);
-                $buffer = substr($buffer, $pos + 1);
-
-                $call = call_user_func($callback, $line."\n");
-
-                if (! is_null($call)) {
-                    fclose($sock);
-
-                    return $call;
-                }
-            }
-        }
-
-        fclose($sock);
-
-        return null;
+        return $result;
     }
 
     /**

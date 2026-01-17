@@ -6,7 +6,7 @@ use Closure;
 use Exception;
 use Illuminate\Support\Str;
 use Ratchet\Client\Connector as WebSocketConnector;
-use React\EventLoop\Factory as ReactFactory;
+use React\EventLoop\Loop;
 use React\Socket\Connector as ReactSocketConnector;
 
 trait MakesWebsocketCalls
@@ -63,7 +63,7 @@ trait MakesWebsocketCalls
             $options['tls']['local_pk'] = $this->sslKey;
         }
 
-        $loop = ReactFactory::create();
+        $loop = Loop::get();
         $socketConnector = new ReactSocketConnector($options, $loop);
         $wsConnector = new WebSocketConnector($loop, $socketConnector);
 
@@ -159,9 +159,13 @@ trait MakesWebsocketCalls
 
         $messages = [];
 
+        $error = null;
+
         if ($callback) {
             $ws->then(function ($connection) use ($callback) {
                 $callback($connection);
+            }, function (Exception $e) use (&$error) {
+                $error = $e;
             });
         } else {
             $ws->then(function ($connection) use (&$externalConnection, &$messages) {
@@ -178,8 +182,8 @@ trait MakesWebsocketCalls
                         'output' => $message,
                     ];
                 });
-            }, function (Exception $e) {
-                throw $e;
+            }, function (Exception $e) use (&$error) {
+                $error = $e;
             });
         }
 
@@ -188,6 +192,11 @@ trait MakesWebsocketCalls
          * decides to close the TTY.
          */
         $loop->run();
+
+        // Re-throw any connection error that occurred.
+        if ($error) {
+            throw $error;
+        }
 
         // Make sure to close the WS connection.
         if ($externalConnection) {
