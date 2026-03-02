@@ -36,7 +36,7 @@
         "guzzlehttp/guzzle": "^7.10",
         "illuminate/macroable": "^11.0|^12.0",
         "illuminate/support": "^11.0|^12.0",
-        "ratchet/pawl": "^0.4.1",
+        "ratchet/pawl": "^0.4.3",
         "symfony/process": "^7.3.4"
     },
     "suggest": {
