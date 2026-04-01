@@ -6,7 +6,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
-use RenokiCo\PhpK8s\Enums\Operation;
 use RenokiCo\PhpK8s\Exceptions\KubernetesAPIException;
 use RenokiCo\PhpK8s\ResourcesList;
 
@@ -148,16 +147,11 @@ trait MakesHttpCalls
      *
      * @throws KubernetesAPIException
      */
-    protected function makeRequest(Operation $operation, string $path, string $payload = '', array $query = ['pretty' => 1], array $options = []): mixed
+    protected function makeRequest(string $method, string $path, string $payload = '', array $query = ['pretty' => 1], array $options = []): mixed
     {
         $resourceClass = $this->resourceClass;
 
-        $method = $operation->httpMethod();
         $response = $this->call($method, $path, $payload, $query, $options);
-
-        if ($operation === Operation::LOG) {
-            return (string) $response->getBody();
-        }
 
         $json = @json_decode($response->getBody(), true);
 
