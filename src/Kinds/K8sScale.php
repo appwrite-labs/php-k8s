@@ -89,7 +89,7 @@ class K8sScale extends K8sResource implements InteractsWithK8sCluster
      * @throws KubernetesAPIException
      */
     #[\Override]
-    public function create(array $query = ['pretty' => 1]): K8sResource
+    public function create(array $query = ['pretty' => 1]): static
     {
         return $this->cluster
             ->setResourceClass(get_class($this))
