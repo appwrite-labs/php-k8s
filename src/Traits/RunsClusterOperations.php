@@ -169,7 +169,7 @@ trait RunsClusterOperations
     /**
      * Get a fresh instance from the cluster.
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
     public function get(array $query = ['pretty' => 1]): static
     {
@@ -186,7 +186,7 @@ trait RunsClusterOperations
     /**
      * Create the resource.
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
     public function create(array $query = ['pretty' => 1]): static
     {
@@ -615,10 +615,10 @@ trait RunsClusterOperations
     /**
      * JSON Patch (RFC 6902) the status subresource.
      */
-    public function jsonPatchStatus($patch, array $query = ['pretty' => 1]): static
+    public function jsonPatchStatus(JsonPatch|array $patch, array $query = ['pretty' => 1]): static
     {
-        if (! $patch instanceof \RenokiCo\PhpK8s\Patches\JsonPatch) {
-            $patch = new \RenokiCo\PhpK8s\Patches\JsonPatch($patch);
+        if (is_array($patch)) {
+            $patch = new JsonPatch($patch);
         }
 
         $instance = $this->cluster
@@ -638,10 +638,10 @@ trait RunsClusterOperations
     /**
      * JSON Merge Patch (RFC 7396) the status subresource.
      */
-    public function jsonMergePatchStatus($patch, array $query = ['pretty' => 1]): static
+    public function jsonMergePatchStatus(JsonMergePatch|array $patch, array $query = ['pretty' => 1]): static
     {
-        if (! $patch instanceof \RenokiCo\PhpK8s\Patches\JsonMergePatch) {
-            $patch = new \RenokiCo\PhpK8s\Patches\JsonMergePatch($patch);
+        if (is_array($patch)) {
+            $patch = new JsonMergePatch($patch);
         }
 
         $instance = $this->cluster
