@@ -8,26 +8,19 @@ use RenokiCo\PhpK8s\Instances\Container;
 use RenokiCo\PhpK8s\K8s;
 use RenokiCo\PhpK8s\Kinds\K8sPod;
 use RenokiCo\PhpK8s\KubernetesCluster;
+use RenokiCo\PhpK8s\PhpK8sServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
     /**
      * The cluster to the Kubernetes cluster.
-     *
-     * @var KubernetesCluster
      */
-    protected $cluster;
-
-    /**
-     * Latest HTTP response (for compatibility with Orchestra Testbench 9.x).
-     *
-     * @var mixed
-     */
-    protected static $latestResponse;
+    protected KubernetesCluster $cluster;
 
     /**
      * Set up the tests.
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -52,10 +45,11 @@ abstract class TestCase extends Orchestra
      * @param  mixed  $app
      * @return array
      */
+    #[\Override]
     protected function getPackageProviders($app)
     {
         return [
-            \RenokiCo\PhpK8s\PhpK8sServiceProvider::class,
+            PhpK8sServiceProvider::class,
         ];
     }
 
@@ -65,6 +59,7 @@ abstract class TestCase extends Orchestra
      * @param  mixed  $app
      * @return void
      */
+    #[\Override]
     public function getEnvironmentSetUp($app)
     {
         //

@@ -22,8 +22,8 @@ features:
     details: Interact with 33+ resource types including Pods, Deployments, Services, ConfigMaps, and more.
 
   - icon: 📝
-    title: Modern PHP 8.2+
-    details: Built with PHP 8.2+ features including enums, type hints, match expressions, and readonly properties.
+    title: Modern PHP 8.3+
+    details: Built with PHP 8.3+ features including enums, type hints, match expressions, and readonly properties.
 
   - icon: 🔧
     title: Easy CRUD Operations
@@ -97,11 +97,11 @@ echo $pod->getPodPhase(); // PodPhase::RUNNING
 
 ## Fork Information
 
-> **Note:** This is a maintained fork of [renoki-co/php-k8s](https://github.com/renoki-co/php-k8s) with enhanced PHP 8.2+ support and additional features.
+> **Note:** This is a maintained fork of [renoki-co/php-k8s](https://github.com/renoki-co/php-k8s) with enhanced PHP 8.3+ support and additional features.
 
 This fork was created to continue active development and modernization of the library. Key differences from the upstream project:
 
-- **PHP 8.2+ Modernization**: Full use of enums, readonly properties, and modern type hints
+- **PHP 8.3+ Modernization**: Full use of enums, readonly properties, and modern type hints
 - **Active Maintenance**: Regular updates for new Kubernetes versions
 - **Enhanced Resource Support**: Additional resource types and improved trait composition
 - **Comprehensive Documentation**: This documentation site with extensive examples and guides
@@ -141,16 +141,16 @@ composer require renoki-co/laravel-php-k8s
 
 This library is tested against multiple Kubernetes versions:
 
-- **v1.32.9** ✅
-- **v1.33.5** ✅
-- **v1.34.1** ✅
+- **v1.33.10** ✅
+- **v1.34.6** ✅
+- **v1.35.3** ✅
 
 ## Requirements
 
-- PHP 8.2 or higher
+- PHP 8.3 or higher
 - ext-json
 - Guzzle 7.x
-- Symfony Process 7.x
+- Symfony Process 7.x or 8.x
 
 ## Community & Support
 

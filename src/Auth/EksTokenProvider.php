@@ -2,6 +2,12 @@
 
 namespace RenokiCo\PhpK8s\Auth;
 
+use Aws\Credentials\CredentialProvider;
+use Aws\Credentials\Credentials;
+use Aws\Credentials\CredentialsInterface;
+use Aws\Signature\SignatureV4;
+use Aws\Sts\StsClient;
+use GuzzleHttp\Psr7\Request;
 use RenokiCo\PhpK8s\Exceptions\AuthenticationException;
 
 class EksTokenProvider extends TokenProvider
@@ -32,8 +38,8 @@ class EksTokenProvider extends TokenProvider
 
     public static function isAvailable(): bool
     {
-        return class_exists(\Aws\Sts\StsClient::class)
-            && class_exists(\Aws\Credentials\CredentialProvider::class);
+        return class_exists(StsClient::class)
+            && class_exists(CredentialProvider::class);
     }
 
     public function withProfile(string $profile): static
@@ -50,6 +56,7 @@ class EksTokenProvider extends TokenProvider
         return $this;
     }
 
+    #[\Override]
     public function refresh(): void
     {
         if (! self::isAvailable()) {
@@ -66,7 +73,7 @@ class EksTokenProvider extends TokenProvider
         $endpoint = "https://sts.{$this->region}.{$dnsSuffix}/?Action=GetCallerIdentity&Version=2011-06-15";
 
         // Create an HTTP request
-        $request = new \GuzzleHttp\Psr7\Request(
+        $request = new Request(
             'GET',
             $endpoint,
             [
@@ -76,7 +83,7 @@ class EksTokenProvider extends TokenProvider
         );
 
         // Sign the request using AWS SignatureV4
-        $signer = new \Aws\Signature\SignatureV4('sts', $this->region);
+        $signer = new SignatureV4('sts', $this->region);
         $signedRequest = $signer->presign(
             $request,
             $credentials,
@@ -111,16 +118,16 @@ class EksTokenProvider extends TokenProvider
         }
     }
 
-    protected function getCredentials(): \Aws\Credentials\CredentialsInterface
+    protected function getCredentials(): CredentialsInterface
     {
-        $provider = \Aws\Credentials\CredentialProvider::defaultProvider([
+        $provider = CredentialProvider::defaultProvider([
             'profile' => $this->profile,
         ]);
 
         $credentials = $provider()->wait();
 
         if ($this->roleArn) {
-            $stsClient = new \Aws\Sts\StsClient([
+            $stsClient = new StsClient([
                 'region' => $this->region,
                 'version' => '2011-06-15',
                 'credentials' => $credentials,
@@ -131,7 +138,7 @@ class EksTokenProvider extends TokenProvider
                 'RoleSessionName' => 'php-k8s-session-'.uniqid(),
             ]);
 
-            $credentials = new \Aws\Credentials\Credentials(
+            $credentials = new Credentials(
                 $result['Credentials']['AccessKeyId'],
                 $result['Credentials']['SecretAccessKey'],
                 $result['Credentials']['SessionToken']

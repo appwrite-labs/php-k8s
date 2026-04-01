@@ -128,7 +128,7 @@ use RenokiCo\PhpK8s\Kinds\K8sResource;
  * @method \RenokiCo\PhpK8s\Kinds\K8sResource|array[\RenokiCo\PhpK8s\Kinds\K8sResource] fromTemplatedYamlFile(string $path, array $replace, \Closure $callback = null)
  * @method static void registerCrd(string $class, string $name = null)
  *
- * @see \RenokiCo\PhpK8s\K8s
+ * @see K8s
  */
 class KubernetesCluster
 {
@@ -139,11 +139,6 @@ class KubernetesCluster
     use Traits\Cluster\MakesWebsocketCalls;
 
     /**
-     * The Cluster API port.
-     */
-    protected ?string $url = null;
-
-    /**
      * The class name for the K8s resource.
      */
     protected ?string $resourceClass = null;
@@ -151,10 +146,7 @@ class KubernetesCluster
     /**
      * Create a new class instance.
      */
-    public function __construct(?string $url = null)
-    {
-        $this->url = $url;
-    }
+    public function __construct(protected ?string $url = null) {}
 
     /**
      * Set the K8s resource class.
@@ -170,7 +162,7 @@ class KubernetesCluster
      * Run a specific operation for the API path with a specific payload.
      *
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
     public function runOperation(Operation|string $operation, string $path, string|null|Closure $payload = '', array $query = ['pretty' => 1]): mixed
     {
@@ -257,8 +249,7 @@ class KubernetesCluster
 
                 ['type' => $type, 'object' => $attributes] = $data;
 
-                $call = call_user_func(
-                    $callback,
+                $call = $callback(
                     $type,
                     new $resourceClass($this, $attributes)
                 );
@@ -329,7 +320,7 @@ class KubernetesCluster
                 $line = substr($buffer, 0, $pos);
                 $buffer = substr($buffer, $pos + 1);
 
-                $call = call_user_func($callback, $line."\n");
+                $call = $callback($line."\n");
 
                 if (! is_null($call)) {
                     fclose($sock);
@@ -348,7 +339,7 @@ class KubernetesCluster
      * Call exec on the resource.
      *
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
     protected function execPath(
         string $path,
@@ -376,7 +367,7 @@ class KubernetesCluster
      * Call attach on the resource.
      *
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
     protected function attachPath(
         string $path,
@@ -405,7 +396,7 @@ class KubernetesCluster
      * Apply server-side apply to the resource.
      *
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
     protected function applyPath(string $path, string $payload, array $query = ['pretty' => 1]): mixed
     {
@@ -422,7 +413,7 @@ class KubernetesCluster
      * Apply JSON Patch (RFC 6902) to the resource.
      *
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
     protected function jsonPatchPath(string $path, string $payload, array $query = ['pretty' => 1]): mixed
     {
@@ -439,7 +430,7 @@ class KubernetesCluster
      * Apply JSON Merge Patch (RFC 7396) to the resource.
      *
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
     protected function jsonMergePatchPath(string $path, string $payload, array $query = ['pretty' => 1]): mixed
     {

@@ -28,24 +28,19 @@ class K8sPod extends K8sResource implements Attachable, Dnsable, Executable, Int
 
     /**
      * The resource Kind parameter.
-     *
-     * @var null|string
      */
-    protected static $kind = 'Pod';
+    protected static ?string $kind = 'Pod';
 
     /**
      * Wether the resource has a namespace.
-     *
-     * @var bool
      */
-    protected static $namespaceable = true;
+    protected static bool $namespaceable = true;
 
     /**
      * Get the DNS name within the cluster.
-     *
-     * @return string|null
      */
-    public function getClusterDns()
+    #[\Override]
+    public function getClusterDns(): ?string
     {
         $ipSlug = str_replace('.', '-', $this->getPodIps()[0]['ip'] ?? '');
 
@@ -145,7 +140,7 @@ class K8sPod extends K8sResource implements Attachable, Dnsable, Executable, Int
     /**
      * Add a new volume to the list.
      *
-     * @param  array|\RenokiCo\PhpK8s\Instances\Volume  $volume
+     * @param  array|Volume  $volume
      * @return $this
      */
     public function addVolume($volume)
@@ -241,7 +236,7 @@ class K8sPod extends K8sResource implements Attachable, Dnsable, Executable, Int
     /**
      * Set the node affinity.
      *
-     * @param  \RenokiCo\PhpK8s\Instances\Affinity  $affinity
+     * @param  Affinity  $affinity
      * @return $this
      */
     public function setNodeAffinity($affinity)
@@ -256,7 +251,7 @@ class K8sPod extends K8sResource implements Attachable, Dnsable, Executable, Int
     /**
      * Get the node affinity.
      *
-     * @return array|\RenokiCo\PhpK8s\Instances\Affinity
+     * @return array|Affinity
      */
     public function getNodeAffinity(bool $asInstance = true)
     {
@@ -272,7 +267,7 @@ class K8sPod extends K8sResource implements Attachable, Dnsable, Executable, Int
     /**
      * Set the pod affinity.
      *
-     * @param  \RenokiCo\PhpK8s\Instances\Affinity  $affinity
+     * @param  Affinity  $affinity
      * @return $this
      */
     public function setPodAffinity($affinity)
@@ -287,7 +282,7 @@ class K8sPod extends K8sResource implements Attachable, Dnsable, Executable, Int
     /**
      * Get the pod affinity.
      *
-     * @return array|\RenokiCo\PhpK8s\Instances\Affinity
+     * @return array|Affinity
      */
     public function getPodAffinity(bool $asInstance = true)
     {
@@ -367,7 +362,7 @@ class K8sPod extends K8sResource implements Attachable, Dnsable, Executable, Int
     /**
      * Get the container status for a specific container.
      *
-     * @return \RenokiCo\PhpK8s\Instances\Container|array|null
+     * @return Container|array|null
      */
     public function getContainer(string $containerName, bool $asInstance = true)
     {
@@ -383,7 +378,7 @@ class K8sPod extends K8sResource implements Attachable, Dnsable, Executable, Int
     /**
      * Get the container status for a specific init container.
      *
-     * @return \RenokiCo\PhpK8s\Instances\Container|array|null
+     * @return Container|array|null
      */
     public function getInitContainer(string $containerName, bool $asInstance = true)
     {

@@ -4,7 +4,7 @@ Set up your local development environment for contributing to PHP K8s.
 
 ## Prerequisites
 
-- PHP 8.2 or higher (8.3+ recommended)
+- PHP 8.3 or higher (8.4+ recommended)
 - Composer
 - Git
 - Kubernetes cluster (Minikube recommended for development)
@@ -29,7 +29,7 @@ composer install
 
 ```bash
 # Start with specific Kubernetes version
-minikube start --kubernetes-version=v1.33.1
+minikube start --kubernetes-version=v1.34.6
 
 # Enable required addons
 minikube addons enable volumesnapshots
@@ -115,7 +115,7 @@ StyleCI handles formatting in CI. Follow existing code patterns:
 
 - PSR-12 coding standard
 - Type hints on all parameters and return types
-- Use PHP 8.2+ features (enums, readonly, match)
+- Use PHP 8.3+ features (enums, readonly, match, typed class constants)
 
 ## Project Structure
 
