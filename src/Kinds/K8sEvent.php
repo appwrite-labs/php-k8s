@@ -4,22 +4,19 @@ namespace RenokiCo\PhpK8s\Kinds;
 
 use RenokiCo\PhpK8s\Contracts\InteractsWithK8sCluster;
 use RenokiCo\PhpK8s\Contracts\Watchable;
+use RenokiCo\PhpK8s\Exceptions\KubernetesAPIException;
 
 class K8sEvent extends K8sResource implements InteractsWithK8sCluster, Watchable
 {
     /**
      * The resource Kind parameter.
-     *
-     * @var null|string
      */
-    protected static $kind = 'Event';
+    protected static ?string $kind = 'Event';
 
     /**
      * Wether the resource has a namespace.
-     *
-     * @var bool
      */
-    protected static $namespaceable = true;
+    protected static bool $namespaceable = true;
 
     /**
      * Attach the given resource to the event.
@@ -45,9 +42,9 @@ class K8sEvent extends K8sResource implements InteractsWithK8sCluster, Watchable
     /**
      * Emit or update the event with the given name.
      *
-     * @return \RenokiCo\PhpK8s\Kinds\K8sResource
+     * @return K8sResource
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
     public function emitOrUpdate(array $query = ['pretty' => 1])
     {

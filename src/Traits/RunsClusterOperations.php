@@ -15,8 +15,12 @@ use RenokiCo\PhpK8s\Exceptions\KubernetesExecException;
 use RenokiCo\PhpK8s\Exceptions\KubernetesLogsException;
 use RenokiCo\PhpK8s\Exceptions\KubernetesScalingException;
 use RenokiCo\PhpK8s\Exceptions\KubernetesWatchException;
+use RenokiCo\PhpK8s\Kinds\K8sResource;
 use RenokiCo\PhpK8s\Kinds\K8sScale;
 use RenokiCo\PhpK8s\KubernetesCluster;
+use RenokiCo\PhpK8s\Patches\JsonMergePatch;
+use RenokiCo\PhpK8s\Patches\JsonPatch;
+use RenokiCo\PhpK8s\ResourcesList;
 
 trait RunsClusterOperations
 {
@@ -26,17 +30,15 @@ trait RunsClusterOperations
     /**
      * The cluster instance that
      * binds to the cluster API.
-     *
-     * @var \RenokiCo\PhpK8s\KubernetesCluster
      */
-    protected $cluster;
+    protected ?KubernetesCluster $cluster = null;
 
     /**
      * Specify the cluster to attach to.
      *
      * @return $this
      */
-    public function onCluster(KubernetesCluster $cluster)
+    public function onCluster(KubernetesCluster $cluster): static
     {
         $this->cluster = $cluster;
 
@@ -45,30 +47,24 @@ trait RunsClusterOperations
 
     /**
      * Get the resource version of the resource.
-     *
-     * @return string|null
      */
-    public function getResourceVersion()
+    public function getResourceVersion(): ?string
     {
         return $this->getAttribute('metadata.resourceVersion', null);
     }
 
     /**
      * Get the resource UID.
-     *
-     * @return string|null
      */
-    public function getResourceUid()
+    public function getResourceUid(): ?string
     {
         return $this->getAttribute('metadata.uid', null);
     }
 
     /**
      * Get the identifier for the current resource.
-     *
-     * @return mixed
      */
-    public function getIdentifier()
+    public function getIdentifier(): mixed
     {
         return $this->getAttribute('metadata.name', null);
     }
@@ -78,7 +74,7 @@ trait RunsClusterOperations
      *
      * @return $this
      */
-    public function refresh(array $query = ['pretty' => 1])
+    public function refresh(array $query = ['pretty' => 1]): static
     {
         return $this->syncWith($this->get($query)->toArray());
     }
@@ -88,7 +84,7 @@ trait RunsClusterOperations
      *
      * @return $this
      */
-    public function refreshOriginal(array $query = ['pretty' => 1])
+    public function refreshOriginal(array $query = ['pretty' => 1]): static
     {
         return $this->syncOriginalWith($this->get($query)->toArray());
     }
@@ -98,7 +94,7 @@ trait RunsClusterOperations
      *
      * @return $this
      */
-    public function refreshResourceVersion()
+    public function refreshResourceVersion(): static
     {
         $this->setAttribute(
             'metadata.resourceVersion',
@@ -114,7 +110,7 @@ trait RunsClusterOperations
      *
      * @return $this
      */
-    public function syncWithCluster(array $query = ['pretty' => 1])
+    public function syncWithCluster(array $query = ['pretty' => 1]): K8sResource
     {
         try {
             return $this->get($query);
@@ -128,7 +124,7 @@ trait RunsClusterOperations
      *
      * @return $this
      */
-    public function createOrUpdate(array $query = ['pretty' => 1])
+    public function createOrUpdate(array $query = ['pretty' => 1]): K8sResource
     {
         if ($this->exists($query)) {
             $this->update($query);
@@ -142,11 +138,10 @@ trait RunsClusterOperations
     /**
      * Get a list with all resources.
      *
-     * @return \RenokiCo\PhpK8s\ResourcesList
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
-    public function all(array $query = ['pretty' => 1])
+    public function all(array $query = ['pretty' => 1]): ResourcesList
     {
         return $this->cluster
             ->setResourceClass(get_class($this))
@@ -161,11 +156,10 @@ trait RunsClusterOperations
     /**
      * Get a list with all resources from all namespaces.
      *
-     * @return \RenokiCo\PhpK8s\ResourcesList
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
-    public function allNamespaces(array $query = ['pretty' => 1])
+    public function allNamespaces(array $query = ['pretty' => 1]): ResourcesList
     {
         return $this->cluster
             ->setResourceClass(get_class($this))
@@ -180,11 +174,10 @@ trait RunsClusterOperations
     /**
      * Get a fresh instance from the cluster.
      *
-     * @return \RenokiCo\PhpK8s\Kinds\K8sResource
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
-    public function get(array $query = ['pretty' => 1])
+    public function get(array $query = ['pretty' => 1]): K8sResource
     {
         return $this->cluster
             ->setResourceClass(get_class($this))
@@ -199,11 +192,10 @@ trait RunsClusterOperations
     /**
      * Create the resource.
      *
-     * @return \RenokiCo\PhpK8s\Kinds\K8sResource
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
-    public function create(array $query = ['pretty' => 1])
+    public function create(array $query = ['pretty' => 1]): K8sResource
     {
         return $this->cluster
             ->setResourceClass(get_class($this))
@@ -219,7 +211,7 @@ trait RunsClusterOperations
      * Update the resource.
      *
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
     public function update(array $query = ['pretty' => 1]): bool
     {
@@ -250,7 +242,7 @@ trait RunsClusterOperations
      *
      * @param  null|int  $gracePeriod
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
     public function delete(array $query = ['pretty' => 1], $gracePeriod = null, string $propagationPolicy = 'Foreground'): bool
     {
@@ -286,9 +278,9 @@ trait RunsClusterOperations
      *
      * @return $this
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
-    public function apply(string $fieldManager, bool $force = false, array $query = ['pretty' => 1])
+    public function apply(string $fieldManager, bool $force = false, array $query = ['pretty' => 1]): static
     {
         $query = array_merge($query, [
             'fieldManager' => $fieldManager,
@@ -315,12 +307,11 @@ trait RunsClusterOperations
     /**
      * Apply JSON Patch (RFC 6902) operations to the resource.
      *
-     * @param  \RenokiCo\PhpK8s\Patches\JsonPatch|array  $patch
      * @return $this
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
-    public function jsonPatch($patch, array $query = ['pretty' => 1])
+    public function jsonPatch(JsonPatch|array $patch, array $query = ['pretty' => 1]): static
     {
         if (is_array($patch)) {
             $payload = json_encode($patch);
@@ -345,12 +336,11 @@ trait RunsClusterOperations
     /**
      * Apply JSON Merge Patch (RFC 7396) to the resource.
      *
-     * @param  \RenokiCo\PhpK8s\Patches\JsonMergePatch|array  $patch
      * @return $this
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
-    public function jsonMergePatch($patch, array $query = ['pretty' => 1])
+    public function jsonMergePatch(JsonMergePatch|array $patch, array $query = ['pretty' => 1]): static
     {
         if (is_array($patch)) {
             $payload = json_encode($patch);
@@ -375,11 +365,10 @@ trait RunsClusterOperations
     /**
      * Watch the resources list until the closure returns true or false.
      *
-     * @return mixed
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesWatchException
+     * @throws KubernetesWatchException
      */
-    public function watchAll(Closure $callback, array $query = ['pretty' => 1])
+    public function watchAll(Closure $callback, array $query = ['pretty' => 1]): mixed
     {
         if (! $this instanceof Watchable) {
             throw new KubernetesWatchException(
@@ -400,11 +389,10 @@ trait RunsClusterOperations
     /**
      * Watch the specific resource until the closure returns true or false.
      *
-     * @return mixed
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesWatchException
+     * @throws KubernetesWatchException
      */
-    public function watch(Closure $callback, array $query = ['pretty' => 1])
+    public function watch(Closure $callback, array $query = ['pretty' => 1]): mixed
     {
         if (! $this instanceof Watchable) {
             throw new KubernetesWatchException(
@@ -425,12 +413,11 @@ trait RunsClusterOperations
     /**
      * Get a specific resource's logs.
      *
-     * @return string
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesLogsException
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesLogsException
+     * @throws KubernetesAPIException
      */
-    public function logs(array $query = ['pretty' => 1])
+    public function logs(array $query = ['pretty' => 1]): string
     {
         if (! $this instanceof Loggable) {
             throw new KubernetesLogsException(
@@ -451,12 +438,11 @@ trait RunsClusterOperations
     /**
      * Watch the specific resource's logs until the closure returns true or false.
      *
-     * @return mixed
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesWatchException
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesLogsException
+     * @throws KubernetesWatchException
+     * @throws KubernetesLogsException
      */
-    public function watchLogs(Closure $callback, array $query = ['pretty' => 1])
+    public function watchLogs(Closure $callback, array $query = ['pretty' => 1]): mixed
     {
         if (! $this instanceof Loggable) {
             throw new KubernetesWatchException(
@@ -487,8 +473,8 @@ trait RunsClusterOperations
      * Get a specific resource scaling data.
      *
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesScalingException
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesScalingException
+     * @throws KubernetesAPIException
      */
     public function scaler(): K8sScale
     {
@@ -515,17 +501,14 @@ trait RunsClusterOperations
     /**
      * Exec a command on the current resource.
      *
-     * @param  string|array  $command
-     * @return string
-     *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesExecException
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesExecException
+     * @throws KubernetesAPIException
      */
     public function exec(
-        $command,
+        string|array $command,
         ?string $container = null,
         array $query = ['pretty' => 1, 'stdin' => 1, 'stdout' => 1, 'stderr' => 1, 'tty' => 1]
-    ) {
+    ): string|array {
         if (! $this instanceof Executable) {
             throw new KubernetesExecException(
                 'The resource '.get_class($this).' does not support exec commands.'
@@ -545,16 +528,15 @@ trait RunsClusterOperations
     /**
      * Attach to the current resource.
      *
-     * @return string
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAttachException
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAttachException
+     * @throws KubernetesAPIException
      */
     public function attach(
         ?Closure $callback = null,
         ?string $container = null,
         array $query = ['pretty' => 1, 'stdin' => 1, 'stdout' => 1, 'stderr' => 1, 'tty' => 1]
-    ) {
+    ): string|array {
         if (! $this instanceof Attachable) {
             throw new KubernetesAttachException(
                 'The resource '.get_class($this).' does not support attach commands.'
@@ -640,10 +622,10 @@ trait RunsClusterOperations
     /**
      * JSON Patch (RFC 6902) the status subresource.
      */
-    public function jsonPatchStatus($patch, array $query = ['pretty' => 1]): self
+    public function jsonPatchStatus(JsonPatch|array $patch, array $query = ['pretty' => 1]): self
     {
-        if (! $patch instanceof \RenokiCo\PhpK8s\Patches\JsonPatch) {
-            $patch = new \RenokiCo\PhpK8s\Patches\JsonPatch($patch);
+        if (! $patch instanceof JsonPatch) {
+            $patch = new JsonPatch($patch);
         }
 
         $instance = $this->cluster
@@ -663,10 +645,10 @@ trait RunsClusterOperations
     /**
      * JSON Merge Patch (RFC 7396) the status subresource.
      */
-    public function jsonMergePatchStatus($patch, array $query = ['pretty' => 1]): self
+    public function jsonMergePatchStatus(JsonMergePatch|array $patch, array $query = ['pretty' => 1]): self
     {
-        if (! $patch instanceof \RenokiCo\PhpK8s\Patches\JsonMergePatch) {
-            $patch = new \RenokiCo\PhpK8s\Patches\JsonMergePatch($patch);
+        if (! $patch instanceof JsonMergePatch) {
+            $patch = new JsonMergePatch($patch);
         }
 
         $instance = $this->cluster

@@ -5,7 +5,7 @@ namespace RenokiCo\PhpK8s\Traits\Cluster;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\RequestOptions;
-use RenokiCo\PhpK8s\Enums\Operation;
+use Psr\Http\Message\ResponseInterface;
 use RenokiCo\PhpK8s\Exceptions\KubernetesAPIException;
 use RenokiCo\PhpK8s\ResourcesList;
 
@@ -49,10 +49,8 @@ trait MakesHttpCalls
 
     /**
      * Get the callable URL for a specific path.
-     *
-     * @return string
      */
-    public function getCallableUrl(string $path, array $query = ['pretty' => 1])
+    public function getCallableUrl(string $path, array $query = ['pretty' => 1]): string
     {
         /**
          * Replace any name[<number>]=value occurences with name=value
@@ -65,10 +63,8 @@ trait MakesHttpCalls
 
     /**
      * Get the Guzzle Client to perform requests on.
-     *
-     * @return \GuzzleHttp\Client
      */
-    public function getClient()
+    public function getClient(): Client
     {
         $options = [
             RequestOptions::HEADERS => [
@@ -105,11 +101,10 @@ trait MakesHttpCalls
     /**
      * Make a HTTP call to a given path with a method and payload.
      *
-     * @return \Psr\Http\Message\ResponseInterface
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
-    public function call(string $method, string $path, string $payload = '', array $query = ['pretty' => 1], array $options = [])
+    public function call(string $method, string $path, string $payload = '', array $query = ['pretty' => 1], array $options = []): ResponseInterface
     {
         try {
             $requestOptions = [
@@ -149,20 +144,14 @@ trait MakesHttpCalls
     /**
      * Call the API with the specified operation and path.
      *
-     * @return mixed
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
-    protected function makeRequest(Operation $operation, string $path, string $payload = '', array $query = ['pretty' => 1], array $options = [])
+    protected function makeRequest(string $method, string $path, string $payload = '', array $query = ['pretty' => 1], array $options = []): mixed
     {
         $resourceClass = $this->resourceClass;
 
-        $method = $operation->httpMethod();
         $response = $this->call($method, $path, $payload, $query, $options);
-
-        if ($operation === Operation::LOG) {
-            return (string) $response->getBody();
-        }
 
         $json = @json_decode($response->getBody(), true);
 
@@ -201,11 +190,10 @@ trait MakesHttpCalls
      * for concurrent or async use (e.g., ReactPHP, Amp, Swoole). Only use in synchronous,
      * single-threaded contexts. Internal use only.
      *
-     * @return \Psr\Http\Message\ResponseInterface
      *
-     * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
+     * @throws KubernetesAPIException
      */
-    public function callWithToken(string $token, string $method, string $path, string $payload = '', array $query = ['pretty' => 1], array $options = [])
+    public function callWithToken(string $token, string $method, string $path, string $payload = '', array $query = ['pretty' => 1], array $options = []): ResponseInterface
     {
         // Temporarily store current authentication state
         $originalToken = $this->token;

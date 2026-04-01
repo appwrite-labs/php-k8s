@@ -10,17 +10,13 @@ trait HasNamespace
 
     /**
      * Wether the resource has a namespace.
-     *
-     * @var bool
      */
-    protected static $namespaceable = false;
+    protected static bool $namespaceable = false;
 
     /**
      * The default namespace for the resource.
-     *
-     * @var string
      */
-    public static $defaultNamespace = 'default';
+    public static string $defaultNamespace = 'default';
 
     /**
      * Overwrite, at runtime, the default namespace for the resource.
@@ -36,7 +32,7 @@ trait HasNamespace
     /**
      * Set the namespace of the resource.
      *
-     * @param  \RenokiCo\PhpK8s\Kinds\K8sNamespace|string  $namespace
+     * @param  K8sNamespace|string  $namespace
      * @return $this
      */
     public function setNamespace($namespace)
@@ -57,7 +53,7 @@ trait HasNamespace
     /**
      * Alias for ->setNamespace().
      *
-     * @param  \RenokiCo\PhpK8s\Kinds\K8sNamespace|string  $namespace
+     * @param  K8sNamespace|string  $namespace
      * @return $this
      */
     public function whereNamespace($namespace)
