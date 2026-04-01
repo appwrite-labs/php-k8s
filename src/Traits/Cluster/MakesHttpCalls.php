@@ -71,12 +71,11 @@ trait MakesHttpCalls
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
-    public function call(string $method, string $path, string $payload = '', array $query = ['pretty' => 1], array $headers = [])
+    public function call(string $method, string $path, string $payload = '', array $query = ['pretty' => 1])
     {
         try {
             $response = $this->getClient()->request($method, $this->getCallableUrl($path, $query), [
                 RequestOptions::BODY => $payload,
-                RequestOptions::HEADERS => $headers,
             ]);
         } catch (ClientException $e) {
             $errorPayload = json_decode((string) $e->getResponse()->getBody(), true);
@@ -103,14 +102,7 @@ trait MakesHttpCalls
         $resourceClass = $this->resourceClass;
 
         $method = static::$operations[$operation] ?? static::$operations[static::GET_OP];
-
-        $headers = match ($operation) {
-            static::JSON_PATCH_OP => ['Content-Type' => 'application/json-patch+json'],
-            static::JSON_MERGE_PATCH_OP => ['Content-Type' => 'application/merge-patch+json'],
-            default => [],
-        };
-
-        $response = $this->call($method, $path, $payload, $query, $headers);
+        $response = $this->call($method, $path, $payload, $query);
 
         if ($operation === static::LOG_OP) {
             return (string) $response->getBody();

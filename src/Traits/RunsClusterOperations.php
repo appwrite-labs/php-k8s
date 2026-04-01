@@ -16,8 +16,6 @@ use RenokiCo\PhpK8s\Exceptions\KubernetesScalingException;
 use RenokiCo\PhpK8s\Exceptions\KubernetesWatchException;
 use RenokiCo\PhpK8s\Kinds\K8sScale;
 use RenokiCo\PhpK8s\KubernetesCluster;
-use RenokiCo\PhpK8s\Patches\JsonMergePatch;
-use RenokiCo\PhpK8s\Patches\JsonPatch;
 
 trait RunsClusterOperations
 {
@@ -511,78 +509,6 @@ trait RunsClusterOperations
     public function resourceScalePath(): string
     {
         return "{$this->getApiPathPrefix()}/".static::getPlural()."/{$this->getIdentifier()}/scale";
-    }
-
-    /**
-     * Get the path, prefixed by '/', that points to the resource status.
-     */
-    public function resourceStatusPath(): string
-    {
-        return "{$this->getApiPathPrefix()}/".static::getPlural()."/{$this->getIdentifier()}/status";
-    }
-
-    /**
-     * Update the status subresource.
-     */
-    public function updateStatus(array $query = ['pretty' => 1]): static
-    {
-        $this->refreshOriginal();
-        $this->refreshResourceVersion();
-
-        return $this->syncWith(
-            $this->cluster->runOperation(
-                KubernetesCluster::REPLACE_OP,
-                $this->resourceStatusPath(),
-                $this->toJsonPayload(),
-                $query
-            )
-        );
-    }
-
-    /**
-     * JSON Patch (RFC 6902) the status subresource.
-     */
-    public function jsonPatchStatus($patch, array $query = ['pretty' => 1]): static
-    {
-        if (! $patch instanceof JsonPatch) {
-            $patch = new JsonPatch($patch);
-        }
-
-        $instance = $this->cluster
-            ->setResourceClass(get_class($this))
-            ->runOperation(
-                KubernetesCluster::JSON_PATCH_OP,
-                $this->resourceStatusPath(),
-                $patch->toJson(),
-                $query
-            );
-
-        $this->syncWith($instance->toArray());
-
-        return $this;
-    }
-
-    /**
-     * JSON Merge Patch (RFC 7396) the status subresource.
-     */
-    public function jsonMergePatchStatus($patch, array $query = ['pretty' => 1]): static
-    {
-        if (! $patch instanceof JsonMergePatch) {
-            $patch = new JsonMergePatch($patch);
-        }
-
-        $instance = $this->cluster
-            ->setResourceClass(get_class($this))
-            ->runOperation(
-                KubernetesCluster::JSON_MERGE_PATCH_OP,
-                $this->resourceStatusPath(),
-                $patch->toJson(),
-                $query
-            );
-
-        $this->syncWith($instance->toArray());
-
-        return $this;
     }
 
     /**

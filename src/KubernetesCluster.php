@@ -152,8 +152,6 @@ class KubernetesCluster
         self::WATCH_LOGS_OP => 'GET',
         self::EXEC_OP => 'POST',
         self::ATTACH_OP => 'POST',
-        self::JSON_PATCH_OP => 'PATCH',
-        self::JSON_MERGE_PATCH_OP => 'PATCH',
     ];
 
     const GET_OP = 'get';
@@ -173,10 +171,6 @@ class KubernetesCluster
     const EXEC_OP = 'exec';
 
     const ATTACH_OP = 'attach';
-
-    const JSON_PATCH_OP = 'json_patch';
-
-    const JSON_MERGE_PATCH_OP = 'json_merge_patch';
 
     /**
      * Create a new class instance.
