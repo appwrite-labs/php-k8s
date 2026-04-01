@@ -113,11 +113,8 @@ trait RunsClusterOperations
     /**
      * Create or update the resource, wether the resource exists
      * or not within the cluster.
-     *
-     * @param  array  $query
-     * @return $this
      */
-    public function syncWithCluster(array $query = ['pretty' => 1])
+    public function syncWithCluster(array $query = ['pretty' => 1]): static
     {
         try {
             return $this->get($query);
@@ -128,11 +125,8 @@ trait RunsClusterOperations
 
     /**
      * Create or update the app based on existence.
-     *
-     * @param  array  $query
-     * @return $this
      */
-    public function createOrUpdate(array $query = ['pretty' => 1])
+    public function createOrUpdate(array $query = ['pretty' => 1]): static
     {
         if ($this->exists($query)) {
             $this->update($query);
@@ -186,12 +180,9 @@ trait RunsClusterOperations
     /**
      * Get a fresh instance from the cluster.
      *
-     * @param  array  $query
-     * @return \RenokiCo\PhpK8s\Kinds\K8sResource
-     *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
-    public function get(array $query = ['pretty' => 1])
+    public function get(array $query = ['pretty' => 1]): static
     {
         return $this->cluster
             ->setResourceClass(get_class($this))
@@ -206,12 +197,9 @@ trait RunsClusterOperations
     /**
      * Create the resource.
      *
-     * @param  array  $query
-     * @return \RenokiCo\PhpK8s\Kinds\K8sResource
-     *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
-    public function create(array $query = ['pretty' => 1])
+    public function create(array $query = ['pretty' => 1]): static
     {
         return $this->cluster
             ->setResourceClass(get_class($this))
@@ -555,6 +543,78 @@ trait RunsClusterOperations
     public function resourceScalePath(): string
     {
         return "{$this->getApiPathPrefix()}/".static::getPlural()."/{$this->getIdentifier()}/scale";
+    }
+
+    /**
+     * Get the path, prefixed by '/', that points to the resource status.
+     */
+    public function resourceStatusPath(): string
+    {
+        return "{$this->getApiPathPrefix()}/".static::getPlural()."/{$this->getIdentifier()}/status";
+    }
+
+    /**
+     * Update the status subresource.
+     */
+    public function updateStatus(array $query = ['pretty' => 1]): static
+    {
+        $this->refreshOriginal();
+        $this->refreshResourceVersion();
+
+        return $this->syncWith(
+            $this->cluster->runOperation(
+                Operation::REPLACE,
+                $this->resourceStatusPath(),
+                $this->toJsonPayload(),
+                $query
+            )
+        );
+    }
+
+    /**
+     * JSON Patch (RFC 6902) the status subresource.
+     */
+    public function jsonPatchStatus($patch, array $query = ['pretty' => 1]): static
+    {
+        if (! $patch instanceof \RenokiCo\PhpK8s\Patches\JsonPatch) {
+            $patch = new \RenokiCo\PhpK8s\Patches\JsonPatch($patch);
+        }
+
+        $instance = $this->cluster
+            ->setResourceClass(get_class($this))
+            ->runOperation(
+                Operation::JSON_PATCH,
+                $this->resourceStatusPath(),
+                $patch->toJson(),
+                $query
+            );
+
+        $this->syncWith($instance->toArray());
+
+        return $this;
+    }
+
+    /**
+     * JSON Merge Patch (RFC 7396) the status subresource.
+     */
+    public function jsonMergePatchStatus($patch, array $query = ['pretty' => 1]): static
+    {
+        if (! $patch instanceof \RenokiCo\PhpK8s\Patches\JsonMergePatch) {
+            $patch = new \RenokiCo\PhpK8s\Patches\JsonMergePatch($patch);
+        }
+
+        $instance = $this->cluster
+            ->setResourceClass(get_class($this))
+            ->runOperation(
+                Operation::JSON_MERGE_PATCH,
+                $this->resourceStatusPath(),
+                $patch->toJson(),
+                $query
+            );
+
+        $this->syncWith($instance->toArray());
+
+        return $this;
     }
 
     /**

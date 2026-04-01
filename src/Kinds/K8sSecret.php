@@ -25,6 +25,22 @@ class K8sSecret extends K8sResource implements InteractsWithK8sCluster, Watchabl
     protected static $namespaceable = true;
 
     /**
+     * Set the secret type.
+     */
+    public function setType(string $type): static
+    {
+        return $this->setAttribute('type', $type);
+    }
+
+    /**
+     * Get the secret type.
+     */
+    public function getType(): ?string
+    {
+        return $this->getAttribute('type');
+    }
+
+    /**
      * Get the data attribute.
      * Supports base64 decoding.
      *

@@ -5,6 +5,22 @@ namespace RenokiCo\PhpK8s\Instances;
 class Container extends Instance
 {
     /**
+     * Set the container name.
+     */
+    public function setName(string $name): static
+    {
+        return $this->setAttribute('name', $name);
+    }
+
+    /**
+     * Get the container name.
+     */
+    public function getName(): ?string
+    {
+        return $this->getAttribute('name');
+    }
+
+    /**
      * Set the image for the container.
      *
      * @param  string  $image
@@ -14,6 +30,70 @@ class Container extends Instance
     public function setImage(string $image, string $tag = 'latest')
     {
         return $this->setAttribute('image', $image.':'.$tag);
+    }
+
+    /**
+     * Set the image pull policy.
+     */
+    public function setImagePullPolicy(string $policy): static
+    {
+        return $this->setAttribute('imagePullPolicy', $policy);
+    }
+
+    /**
+     * Get the image pull policy.
+     */
+    public function getImagePullPolicy(): ?string
+    {
+        return $this->getAttribute('imagePullPolicy');
+    }
+
+    /**
+     * Set the command (entrypoint) for the container.
+     */
+    public function setCommand(array $command): static
+    {
+        return $this->setAttribute('command', $command);
+    }
+
+    /**
+     * Get the command (entrypoint) for the container.
+     */
+    public function getCommand(): array
+    {
+        return $this->getAttribute('command', []);
+    }
+
+    /**
+     * Set the args for the container.
+     */
+    public function setArgs(array $args): static
+    {
+        return $this->setAttribute('args', $args);
+    }
+
+    /**
+     * Get the args for the container.
+     */
+    public function getArgs(): array
+    {
+        return $this->getAttribute('args', []);
+    }
+
+    /**
+     * Set the working directory for the container.
+     */
+    public function setWorkingDir(string $dir): static
+    {
+        return $this->setAttribute('workingDir', $dir);
+    }
+
+    /**
+     * Get the working directory for the container.
+     */
+    public function getWorkingDir(): ?string
+    {
+        return $this->getAttribute('workingDir');
     }
 
     /**
