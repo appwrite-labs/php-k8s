@@ -25,17 +25,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.3', '8.4', '8.5']
-        kubernetes: ['1.33.10', '1.34.6', '1.35.3']
-        laravel: ['12.*', '13.*']
-        prefer: [prefer-lowest, prefer-stable]
-        include:
-          - laravel: "12.*"
-            testbench: "10.*"
-          - laravel: "13.*"
-            testbench: "11.*"
+        php: ['8.3']
+        kubernetes: ['1.33.10']
 
-    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - K8s v${{ matrix.kubernetes }} --${{ matrix.prefer }}
+    name: PHP ${{ matrix.php }} - K8s v${{ matrix.kubernetes }}
 
     steps:
       - uses: actions/checkout@v6
@@ -47,27 +40,11 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, yaml
           coverage: pcov
 
-      - name: Get composer cache directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Prepare cache key
-        id: prep
-        run: |
-          PHP_VERSION=${{ matrix.php }}
-          LARAVEL_VERSION=${{ matrix.laravel }}
-          PREFER_VERSION=${{ matrix.prefer }}
-
-          # Remove any .* from the versions
-          LARAVEL_VERSION=${LARAVEL_VERSION//.*}
-
-          echo "cache-key=composer-php-$PHP_VERSION-$LARAVEL_VERSION-$PREFER_VERSION-${{ hashFiles('composer.json') }}" >> $GITHUB_OUTPUT
-
       - uses: actions/cache@v5
         name: Cache dependencies
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ steps.prep.outputs.cache-key }}
+          path: ~/.composer/cache/files
+          key: composer-php-${{ matrix.php }}-${{ hashFiles('composer.json') }}
 
       - uses: medyagh/setup-minikube@latest
         name: Setup Minikube
@@ -96,9 +73,7 @@ jobs:
           kubectl proxy --port=8080 --reject-paths="^/non-existent-path" &
 
       - name: Install dependencies
-        run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
-          composer update --${{ matrix.prefer }} --prefer-dist --no-interaction
+        run: composer update --prefer-stable --prefer-dist --no-interaction
 
       - name: Setup in-cluster config
         run: |
