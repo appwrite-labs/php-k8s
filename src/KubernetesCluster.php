@@ -152,25 +152,38 @@ class KubernetesCluster
         self::WATCH_LOGS_OP => 'GET',
         self::EXEC_OP => 'POST',
         self::ATTACH_OP => 'POST',
+        self::JSON_PATCH_OP => 'PATCH',
+        self::JSON_MERGE_PATCH_OP => 'PATCH',
     ];
 
     const GET_OP = 'get';
+
     const CREATE_OP = 'create';
+
     const REPLACE_OP = 'replace';
+
     const DELETE_OP = 'delete';
+
     const LOG_OP = 'logs';
+
     const WATCH_OP = 'watch';
+
     const WATCH_LOGS_OP = 'watch_logs';
+
     const EXEC_OP = 'exec';
+
     const ATTACH_OP = 'attach';
+
+    const JSON_PATCH_OP = 'json_patch';
+
+    const JSON_MERGE_PATCH_OP = 'json_merge_patch';
 
     /**
      * Create a new class instance.
      *
-     * @param  string|null  $url
      * @return void
      */
-    public function __construct(string $url = null)
+    public function __construct(?string $url = null)
     {
         $this->url = $url;
     }
@@ -178,7 +191,6 @@ class KubernetesCluster
     /**
      * Set the K8s resource class.
      *
-     * @param  string  $resourceClass
      * @return $this
      */
     public function setResourceClass(string $resourceClass)
@@ -191,10 +203,7 @@ class KubernetesCluster
     /**
      * Run a specific operation for the API path with a specific payload.
      *
-     * @param  string  $operation
-     * @param  string  $path
      * @param  string|null|Closure  $payload
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -219,9 +228,6 @@ class KubernetesCluster
     /**
      * Watch for the current resource or a resource list.
      *
-     * @param  string  $path
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return bool
      */
     protected function watchPath(string $path, Closure $callback, array $query = ['pretty' => 1])
@@ -254,9 +260,6 @@ class KubernetesCluster
     /**
      * Watch for the logs for the resource.
      *
-     * @param  string  $path
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return bool
      */
     protected function watchLogsPath(string $path, Closure $callback, array $query = ['pretty' => 1])
@@ -272,13 +275,14 @@ class KubernetesCluster
             $separator = \strrpos($chunk, "\n");
             if ($separator !== false) {
                 $extra = \substr($chunk, $separator + \strlen("\n"));
-                $chunk = \substr($chunk, 0, $separator) . "\n";
+                $chunk = \substr($chunk, 0, $separator)."\n";
 
                 $call = call_user_func($callback, $chunk);
-                if (!is_null($call)) {
+                if (! is_null($call)) {
                     fclose($sock);
                     unset($data);
                     unset($chunk);
+
                     return $call;
                 }
 
@@ -290,8 +294,6 @@ class KubernetesCluster
     /**
      * Call exec on the resource.
      *
-     * @param  string  $path
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -321,9 +323,6 @@ class KubernetesCluster
     /**
      * Call attach on the resource.
      *
-     * @param  string  $path
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException

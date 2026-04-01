@@ -13,8 +13,6 @@ trait MakesHttpCalls
     /**
      * Get the callable URL for a specific path.
      *
-     * @param  string  $path
-     * @param  array  $query
      * @return string
      */
     public function getCallableUrl(string $path, array $query = ['pretty' => 1])
@@ -69,19 +67,16 @@ trait MakesHttpCalls
     /**
      * Make a HTTP call to a given path with a method and payload.
      *
-     * @param  string  $method
-     * @param  string  $path
-     * @param  string  $payload
-     * @param  array  $query
      * @return \Psr\Http\Message\ResponseInterface
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
-    public function call(string $method, string $path, string $payload = '', array $query = ['pretty' => 1])
+    public function call(string $method, string $path, string $payload = '', array $query = ['pretty' => 1], array $headers = [])
     {
         try {
             $response = $this->getClient()->request($method, $this->getCallableUrl($path, $query), [
                 RequestOptions::BODY => $payload,
+                RequestOptions::HEADERS => $headers,
             ]);
         } catch (ClientException $e) {
             $errorPayload = json_decode((string) $e->getResponse()->getBody(), true);
@@ -99,10 +94,6 @@ trait MakesHttpCalls
     /**
      * Call the API with the specified method and path.
      *
-     * @param  string  $operation
-     * @param  string  $path
-     * @param  string  $payload
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -112,7 +103,14 @@ trait MakesHttpCalls
         $resourceClass = $this->resourceClass;
 
         $method = static::$operations[$operation] ?? static::$operations[static::GET_OP];
-        $response = $this->call($method, $path, $payload, $query);
+
+        $headers = match ($operation) {
+            static::JSON_PATCH_OP => ['Content-Type' => 'application/json-patch+json'],
+            static::JSON_MERGE_PATCH_OP => ['Content-Type' => 'application/merge-patch+json'],
+            default => [],
+        };
+
+        $response = $this->call($method, $path, $payload, $query, $headers);
 
         if ($operation === static::LOG_OP) {
             return (string) $response->getBody();
@@ -124,7 +122,7 @@ trait MakesHttpCalls
         // This can be encountered in case of a pod log request, for example,
         // where the data returned are just console logs.
 
-        if (!$json) {
+        if (! $json) {
             return (string) $response->getBody();
         }
 

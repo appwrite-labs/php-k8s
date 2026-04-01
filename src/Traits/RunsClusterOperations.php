@@ -16,6 +16,8 @@ use RenokiCo\PhpK8s\Exceptions\KubernetesScalingException;
 use RenokiCo\PhpK8s\Exceptions\KubernetesWatchException;
 use RenokiCo\PhpK8s\Kinds\K8sScale;
 use RenokiCo\PhpK8s\KubernetesCluster;
+use RenokiCo\PhpK8s\Patches\JsonMergePatch;
+use RenokiCo\PhpK8s\Patches\JsonPatch;
 
 trait RunsClusterOperations
 {
@@ -33,7 +35,6 @@ trait RunsClusterOperations
     /**
      * Specify the cluster to attach to.
      *
-     * @param  \RenokiCo\PhpK8s\KubernetesCluster  $cluster
      * @return $this
      */
     public function onCluster(KubernetesCluster $cluster)
@@ -76,7 +77,6 @@ trait RunsClusterOperations
     /**
      * Make a call to the cluster to get a fresh instance.
      *
-     * @param  array  $query
      * @return $this
      */
     public function refresh(array $query = ['pretty' => 1])
@@ -87,7 +87,6 @@ trait RunsClusterOperations
     /**
      * Make a call to the cluster to get fresh original values.
      *
-     * @param  array  $query
      * @return $this
      */
     public function refreshOriginal(array $query = ['pretty' => 1])
@@ -140,7 +139,6 @@ trait RunsClusterOperations
     /**
      * Get a list with all resources.
      *
-     * @param  array  $query
      * @return \RenokiCo\PhpK8s\ResourcesList
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -160,7 +158,6 @@ trait RunsClusterOperations
     /**
      * Get a list with all resources from all namespaces.
      *
-     * @param  array  $query
      * @return \RenokiCo\PhpK8s\ResourcesList
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -214,8 +211,6 @@ trait RunsClusterOperations
     /**
      * Update the resource.
      *
-     * @param  array  $query
-     * @return bool
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
@@ -246,10 +241,7 @@ trait RunsClusterOperations
     /**
      * Delete the resource.
      *
-     * @param  array  $query
      * @param  null|int  $gracePeriod
-     * @param  string  $propagationPolicy
-     * @return bool
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
@@ -285,8 +277,6 @@ trait RunsClusterOperations
     /**
      * Watch the resources list until the closure returns true or false.
      *
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesWatchException
@@ -312,8 +302,6 @@ trait RunsClusterOperations
     /**
      * Watch the specific resource until the closure returns true or false.
      *
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesWatchException
@@ -339,7 +327,6 @@ trait RunsClusterOperations
     /**
      * Get a specific resource's logs.
      *
-     * @param  array  $query
      * @return string
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesLogsException
@@ -366,8 +353,6 @@ trait RunsClusterOperations
     /**
      * Watch the specific resource's logs until the closure returns true or false.
      *
-     * @param  Closure  $callback
-     * @param  array  $query
      * @return mixed
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesWatchException
@@ -403,7 +388,6 @@ trait RunsClusterOperations
     /**
      * Get a specific resource scaling data.
      *
-     * @return \RenokiCo\PhpK8s\Kinds\K8sScale
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesScalingException
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
@@ -434,8 +418,6 @@ trait RunsClusterOperations
      * Exec a command on the current resource.
      *
      * @param  string|array  $command
-     * @param  string|null  $container
-     * @param  array  $query
      * @return string
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesExecException
@@ -443,7 +425,7 @@ trait RunsClusterOperations
      */
     public function exec(
         $command,
-        string $container = null,
+        ?string $container = null,
         array $query = ['pretty' => 1, 'stdin' => 1, 'stdout' => 1, 'stderr' => 1, 'tty' => 1]
     ) {
         if (! $this instanceof Executable) {
@@ -465,17 +447,14 @@ trait RunsClusterOperations
     /**
      * Attach to the current resource.
      *
-     * @param  \Closure|null  $callback
-     * @param  string|null  $container
-     * @param  array  $query
      * @return string
      *
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAttachException
      * @throws \RenokiCo\PhpK8s\Exceptions\KubernetesAPIException
      */
     public function attach(
-        Closure $callback = null,
-        string $container = null,
+        ?Closure $callback = null,
+        ?string $container = null,
         array $query = ['pretty' => 1, 'stdin' => 1, 'stdout' => 1, 'stderr' => 1, 'tty' => 1]
     ) {
         if (! $this instanceof Attachable) {
@@ -496,9 +475,6 @@ trait RunsClusterOperations
 
     /**
      * Get the path, prefixed by '/', that points to the resources list.
-     *
-     * @param  bool  $withNamespace
-     * @return string
      */
     public function allResourcesPath(bool $withNamespace = true): string
     {
@@ -507,8 +483,6 @@ trait RunsClusterOperations
 
     /**
      * Get the path, prefixed by '/', that points to the specific resource.
-     *
-     * @return string
      */
     public function resourcePath(): string
     {
@@ -517,8 +491,6 @@ trait RunsClusterOperations
 
     /**
      * Get the path, prefixed by '/', that points to the resource watch.
-     *
-     * @return string
      */
     public function allResourcesWatchPath(): string
     {
@@ -527,8 +499,6 @@ trait RunsClusterOperations
 
     /**
      * Get the path, prefixed by '/', that points to the specific resource to watch.
-     *
-     * @return string
      */
     public function resourceWatchPath(): string
     {
@@ -537,8 +507,6 @@ trait RunsClusterOperations
 
     /**
      * Get the path, prefixed by '/', that points to the resource scale.
-     *
-     * @return string
      */
     public function resourceScalePath(): string
     {
@@ -563,7 +531,7 @@ trait RunsClusterOperations
 
         return $this->syncWith(
             $this->cluster->runOperation(
-                Operation::REPLACE,
+                KubernetesCluster::REPLACE_OP,
                 $this->resourceStatusPath(),
                 $this->toJsonPayload(),
                 $query
@@ -576,14 +544,14 @@ trait RunsClusterOperations
      */
     public function jsonPatchStatus($patch, array $query = ['pretty' => 1]): static
     {
-        if (! $patch instanceof \RenokiCo\PhpK8s\Patches\JsonPatch) {
-            $patch = new \RenokiCo\PhpK8s\Patches\JsonPatch($patch);
+        if (! $patch instanceof JsonPatch) {
+            $patch = new JsonPatch($patch);
         }
 
         $instance = $this->cluster
             ->setResourceClass(get_class($this))
             ->runOperation(
-                Operation::JSON_PATCH,
+                KubernetesCluster::JSON_PATCH_OP,
                 $this->resourceStatusPath(),
                 $patch->toJson(),
                 $query
@@ -599,14 +567,14 @@ trait RunsClusterOperations
      */
     public function jsonMergePatchStatus($patch, array $query = ['pretty' => 1]): static
     {
-        if (! $patch instanceof \RenokiCo\PhpK8s\Patches\JsonMergePatch) {
-            $patch = new \RenokiCo\PhpK8s\Patches\JsonMergePatch($patch);
+        if (! $patch instanceof JsonMergePatch) {
+            $patch = new JsonMergePatch($patch);
         }
 
         $instance = $this->cluster
             ->setResourceClass(get_class($this))
             ->runOperation(
-                Operation::JSON_MERGE_PATCH,
+                KubernetesCluster::JSON_MERGE_PATCH_OP,
                 $this->resourceStatusPath(),
                 $patch->toJson(),
                 $query
@@ -619,8 +587,6 @@ trait RunsClusterOperations
 
     /**
      * Get the path, prefixed by '/', that points to the specific resource to log.
-     *
-     * @return string
      */
     public function resourceLogPath(): string
     {
@@ -629,8 +595,6 @@ trait RunsClusterOperations
 
     /**
      * Get the path, prefixed by '/', that points to the specific resource to exec.
-     *
-     * @return string
      */
     public function resourceExecPath(): string
     {
@@ -639,8 +603,6 @@ trait RunsClusterOperations
 
     /**
      * Get the path, prefixed by '/', that points to the specific resource to attach.
-     *
-     * @return string
      */
     public function resourceAttachPath(): string
     {
@@ -649,12 +611,8 @@ trait RunsClusterOperations
 
     /**
      * Get the prefix path for the resource.
-     *
-     * @param  bool  $withNamespace
-     * @param  string|null  $preNamespaceAction
-     * @return string
      */
-    protected function getApiPathPrefix(bool $withNamespace = true, string $preNamespaceAction = null): string
+    protected function getApiPathPrefix(bool $withNamespace = true, ?string $preNamespaceAction = null): string
     {
         $version = $this->getApiVersion();
 
