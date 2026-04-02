@@ -174,6 +174,12 @@ class KubernetesCluster
         return match ($operation) {
             Operation::WATCH => $this->watchPath($path, $payload, $query),
             Operation::WATCH_LOGS => $this->watchLogsPath($path, $payload, $query),
+            Operation::LOG => (string) $this->call(
+                $operation->httpMethod(),
+                $path,
+                is_string($payload) ? $payload : '',
+                $query
+            )->getBody(),
             Operation::EXEC => $this->execPath($path, $query),
             Operation::ATTACH => $this->attachPath($path, $payload, $query),
             Operation::APPLY => $this->applyPath($path, $payload, $query),
