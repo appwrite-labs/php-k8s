@@ -119,7 +119,7 @@ class Container extends Instance
             return null;
         }
 
-        return RestartPolicy::from($policy);
+        return RestartPolicy::tryFrom($policy);
     }
 
     /**

@@ -11,6 +11,8 @@ class ContainerTest extends TestCase
 {
     public function test_container_build()
     {
+        $this->assertNull(K8s::container()->getRestartPolicy());
+
         $container = K8s::container();
 
         $volume = K8s::volume()->awsEbs('vol-1234', 'ext3');
@@ -105,6 +107,10 @@ class ContainerTest extends TestCase
             ['name' => 'http', 'protocol' => 'TCP', 'containerPort' => 80],
             ['name' => 'https', 'protocol' => 'TCP', 'containerPort' => 443],
         ], $container->getPorts());
+
+        $stringPolicy = K8s::container()->setRestartPolicy('Never');
+        $this->assertEquals(RestartPolicy::NEVER, $stringPolicy->getRestartPolicy());
+
         $this->assertEquals('1Gi', $container->getMinMemory());
         $this->assertEquals('2Gi', $container->getMaxMemory());
         $this->assertEquals('500m', $container->getMinCpu());
