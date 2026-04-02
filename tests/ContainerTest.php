@@ -2,6 +2,7 @@
 
 namespace RenokiCo\PhpK8s\Test;
 
+use RenokiCo\PhpK8s\Enums\RestartPolicy;
 use RenokiCo\PhpK8s\Instances\MountedVolume;
 use RenokiCo\PhpK8s\Instances\Probe;
 use RenokiCo\PhpK8s\K8s;
@@ -10,6 +11,8 @@ class ContainerTest extends TestCase
 {
     public function test_container_build()
     {
+        $this->assertNull(K8s::container()->getRestartPolicy());
+
         $container = K8s::container();
 
         $volume = K8s::volume()->awsEbs('vol-1234', 'ext3');
@@ -21,6 +24,7 @@ class ContainerTest extends TestCase
             ->addConfigMapRefs(['SECRET_TWO' => ['cm_ref_name', 'cm_ref_key']])
             ->addFieldRefs(['NODE_NAME' => ['spec.nodeName']])
             ->setArgs(['--test'])
+            ->setRestartPolicy(RestartPolicy::ALWAYS)
             ->addPort(80, 'TCP', 'http')
             ->addPort(443, 'TCP', 'https')
             ->setMountedVolumes([$volume->mountTo('/some/path')]);
@@ -98,10 +102,15 @@ class ContainerTest extends TestCase
         $this->assertStringEndsWith('nginx:1.23', $container->getImage());
         $this->assertEquals([], $container->getEnv([]));
         $this->assertEquals(['--test'], $container->getArgs());
+        $this->assertEquals(RestartPolicy::ALWAYS, $container->getRestartPolicy());
         $this->assertEquals([
             ['name' => 'http', 'protocol' => 'TCP', 'containerPort' => 80],
             ['name' => 'https', 'protocol' => 'TCP', 'containerPort' => 443],
         ], $container->getPorts());
+
+        $stringPolicy = K8s::container()->setRestartPolicy('Never');
+        $this->assertEquals(RestartPolicy::NEVER, $stringPolicy->getRestartPolicy());
+
         $this->assertEquals('1Gi', $container->getMinMemory());
         $this->assertEquals('2Gi', $container->getMaxMemory());
         $this->assertEquals('500m', $container->getMinCpu());

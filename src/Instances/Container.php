@@ -2,6 +2,8 @@
 
 namespace RenokiCo\PhpK8s\Instances;
 
+use RenokiCo\PhpK8s\Enums\RestartPolicy;
+
 class Container extends Instance
 {
     /**
@@ -92,6 +94,32 @@ class Container extends Instance
     public function getWorkingDir(): ?string
     {
         return $this->getAttribute('workingDir');
+    }
+
+    /**
+     * Set the restart policy for the container.
+     */
+    public function setRestartPolicy(RestartPolicy|string $policy): static
+    {
+        if ($policy instanceof RestartPolicy) {
+            $policy = $policy->value;
+        }
+
+        return $this->setAttribute('restartPolicy', $policy);
+    }
+
+    /**
+     * Get the restart policy for the container.
+     */
+    public function getRestartPolicy(): ?RestartPolicy
+    {
+        $policy = $this->getAttribute('restartPolicy');
+
+        if ($policy === null) {
+            return null;
+        }
+
+        return RestartPolicy::tryFrom($policy);
     }
 
     /**
