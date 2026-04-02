@@ -32,7 +32,6 @@ class KubernetesClusterTest extends TestCase
             ->runOperation(Operation::LOG, '/api/v1/namespaces/default/pods/example/log', '');
 
         $this->assertSame($expectedLogs, $result);
-        $this->assertIsString($result);
     }
 
     public function test_non_log_operations_still_hydrate_resources_from_json(): void

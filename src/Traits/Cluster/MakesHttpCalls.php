@@ -156,8 +156,7 @@ trait MakesHttpCalls
         $json = @json_decode($response->getBody(), true);
 
         // If the output is not JSONable, return the response itself.
-        // This can be encountered in case of a pod log request, for example,
-        // where the data returned are just console logs.
+        // This can be encountered when an endpoint returns plain-text output.
 
         if (! $json) {
             return (string) $response->getBody();
