@@ -145,21 +145,49 @@ class K8sResource implements Arrayable, Jsonable
     }
 
     /**
-     * Convert the object to its JSON representation, but
-     * escaping [] for {}. Optionally, you can specify
+     * Convert the object to its JSON representation, coercing empty
+     * map fields from [] to {}. Optionally, you can specify
      * the Kind attribute to replace.
-     *
-     * @return string
      */
     public function toJsonPayload(?string $kind = null): string|false
     {
-        $attributes = $this->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES, $kind);
+        $coerced = $this->coerceEmptyArraysToObjects($this->toArray($kind));
 
-        $attributes = str_replace(': []', ': {}', $attributes);
+        return json_encode($coerced, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    }
 
-        $attributes = str_replace('"allowedTopologies": {}', '"allowedTopologies": []', $attributes);
-        $attributes = str_replace('"mountOptions": {}', '"mountOptions": []', $attributes);
-        $attributes = str_replace('"accessModes": {}', '"accessModes": []', $attributes);
+    /**
+     * Kubernetes map fields are encoded by PHP's json_encode as `[]` when empty,
+     * but the API expects `{}` for objects. Walk the decoded structure and convert
+     * every empty array into an empty object so the byte sequence is only ever
+     * changed at structural positions — never inside string scalars (which would
+     * corrupt embedded scripts such as `glob(...) ?: []`).
+     *
+     * A handful of genuine list fields must stay as `[]` even when empty; those
+     * keys are exempted by name at any nesting depth.
+     *
+     * @param  array<array-key, mixed>  $attributes
+     * @return array<array-key, mixed>
+     */
+    protected function coerceEmptyArraysToObjects(array $attributes): array
+    {
+        $emptyArrayLists = ['allowedTopologies', 'mountOptions', 'accessModes'];
+
+        foreach ($attributes as $key => $value) {
+            if (! is_array($value)) {
+                continue;
+            }
+
+            if ($value === []) {
+                if (! in_array($key, $emptyArrayLists, true)) {
+                    $attributes[$key] = (object) [];
+                }
+
+                continue;
+            }
+
+            $attributes[$key] = $this->coerceEmptyArraysToObjects($value);
+        }
 
         return $attributes;
     }
