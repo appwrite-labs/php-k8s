@@ -233,22 +233,13 @@ trait RunsClusterOperations
     /**
      * Delete the resource.
      *
-     * @param  null|int  $gracePeriod
-     *
      * @throws KubernetesAPIException
      */
-    public function delete(array $query = ['pretty' => 1], $gracePeriod = null, string $propagationPolicy = 'Foreground'): bool
+    public function delete(array $query = ['pretty' => 1], ?int $gracePeriod = null, string $propagationPolicy = 'Foreground'): bool
     {
         if (! $this->isSynced()) {
             return true;
         }
-
-        $this->setAttribute('preconditions', [
-            'resourceVersion' => $this->getResourceVersion(),
-            'uid' => $this->getResourceUid(),
-            'propagationPolicy' => $propagationPolicy,
-            'gracePeriodSeconds' => $gracePeriod,
-        ]);
 
         $this->refresh();
 
@@ -257,13 +248,44 @@ trait RunsClusterOperations
             ->runOperation(
                 Operation::DELETE,
                 $this->resourcePath(),
-                $this->toJsonPayload('DeleteOptions'),
+                json_encode(
+                    $this->deleteOptions($gracePeriod, $propagationPolicy),
+                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
+                ),
                 $query
             );
 
         $this->synced = false;
 
         return true;
+    }
+
+    /**
+     * Build the DeleteOptions payload for the delete operation.
+     * The propagationPolicy and gracePeriodSeconds fields are top-level
+     * DeleteOptions fields; only the resource uid belongs in preconditions.
+     *
+     * @return array<string, mixed>
+     */
+    public function deleteOptions(?int $gracePeriod = null, string $propagationPolicy = 'Foreground'): array
+    {
+        $options = [
+            'apiVersion' => 'v1',
+            'kind' => 'DeleteOptions',
+            'propagationPolicy' => $propagationPolicy,
+        ];
+
+        if (! is_null($gracePeriod)) {
+            $options['gracePeriodSeconds'] = $gracePeriod;
+        }
+
+        if (! is_null($uid = $this->getResourceUid())) {
+            $options['preconditions'] = [
+                'uid' => $uid,
+            ];
+        }
+
+        return $options;
     }
 
     /**
