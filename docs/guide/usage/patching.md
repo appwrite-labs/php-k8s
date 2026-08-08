@@ -230,6 +230,26 @@ The library automatically sets the correct Content-Type headers:
 - JSON Patch: `application/json-patch+json`
 - JSON Merge Patch: `application/merge-patch+json`
 
+## Empty Maps vs Empty Lists
+
+PHP represents both empty JSON objects (`{}`) and empty JSON arrays (`[]`) as `[]`, but the Kubernetes API distinguishes them: map fields such as `emptyDir: {}` are rejected with a 422 error when sent as `[]`. This matters for patches built from fetched resources, where every `{}` in the API response decodes to a PHP `[]`.
+
+Patch payloads receive the same structural coercion as `create()`/`update()` payloads:
+
+- Empty arrays nested inside JSON Patch operation values and JSON Merge Patch documents encode as `{}`.
+- An operation value that is itself an empty array stays `[]`, so clearing list fields works: `['op' => 'replace', 'path' => '/metadata/finalizers', 'value' => []]`.
+- Known list fields (`finalizers`, `conditions`, `accessModes`, `mountOptions`, `allowedTopologies`) stay `[]` at any depth.
+
+```php
+// Fetched template volumes decode emptyDir: {} to [] in PHP.
+$volumes = $statefulSet->getAttribute('spec.template.spec.volumes');
+
+// Re-encodes emptyDir as {} instead of [], so the API accepts it.
+$statefulSet->jsonPatch([
+    ['op' => 'replace', 'path' => '/spec/template/spec/volumes', 'value' => $volumes],
+]);
+```
+
 ## Practical Examples
 
 ### Rolling Update with Version Check
