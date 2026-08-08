@@ -306,18 +306,12 @@ trait RunsClusterOperations
      */
     public function jsonPatch(JsonPatch|array $patch, array $query = ['pretty' => 1]): static
     {
-        if (is_array($patch)) {
-            $payload = json_encode($patch);
-        } else {
-            $payload = $patch->toJson();
-        }
-
         $instance = $this->cluster
             ->setResourceClass(get_class($this))
             ->runOperation(
                 Operation::JSON_PATCH,
                 $this->resourcePath(),
-                $payload,
+                $this->toJsonPatchPayload($patch),
                 $query
             );
 
@@ -335,18 +329,12 @@ trait RunsClusterOperations
      */
     public function jsonMergePatch(JsonMergePatch|array $patch, array $query = ['pretty' => 1]): static
     {
-        if (is_array($patch)) {
-            $payload = json_encode($patch);
-        } else {
-            $payload = $patch->toJson();
-        }
-
         $instance = $this->cluster
             ->setResourceClass(get_class($this))
             ->runOperation(
                 Operation::JSON_MERGE_PATCH,
                 $this->resourcePath(),
-                $payload,
+                $this->toJsonMergePatchPayload($patch),
                 $query
             );
 
@@ -617,16 +605,12 @@ trait RunsClusterOperations
      */
     public function jsonPatchStatus(JsonPatch|array $patch, array $query = ['pretty' => 1]): static
     {
-        if (is_array($patch)) {
-            $patch = new JsonPatch($patch);
-        }
-
         $instance = $this->cluster
             ->setResourceClass(get_class($this))
             ->runOperation(
                 Operation::JSON_PATCH,
                 $this->resourceStatusPath(),
-                $patch->toJson(),
+                $this->toJsonPatchPayload($patch),
                 $query
             );
 
@@ -640,16 +624,12 @@ trait RunsClusterOperations
      */
     public function jsonMergePatchStatus(JsonMergePatch|array $patch, array $query = ['pretty' => 1]): static
     {
-        if (is_array($patch)) {
-            $patch = new JsonMergePatch($patch);
-        }
-
         $instance = $this->cluster
             ->setResourceClass(get_class($this))
             ->runOperation(
                 Operation::JSON_MERGE_PATCH,
                 $this->resourceStatusPath(),
-                $patch->toJson(),
+                $this->toJsonMergePatchPayload($patch),
                 $query
             );
 

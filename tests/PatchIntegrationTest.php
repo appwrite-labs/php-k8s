@@ -407,4 +407,52 @@ class PatchIntegrationTest extends TestCase
             $this->cleanupTestPod($pod);
         }
     }
+
+    public function test_json_patch_value_built_from_fetched_resource_with_empty_dir()
+    {
+        $deployment = $this->cluster->deployment()
+            ->setName('patch-empty-dir-test')
+            ->setSelectors(['matchLabels' => ['app' => 'patch-empty-dir-test']])
+            ->setReplicas(1)
+            ->setTemplate([
+                'metadata' => ['labels' => ['app' => 'patch-empty-dir-test']],
+                'spec' => [
+                    'containers' => [
+                        [
+                            'name' => 'mariadb',
+                            'image' => 'public.ecr.aws/docker/library/mariadb:11.8',
+                            'env' => [['name' => 'MARIADB_ROOT_PASSWORD', 'value' => 'test']],
+                            'volumeMounts' => [['name' => 'scratch', 'mountPath' => '/scratch']],
+                        ],
+                    ],
+                    'volumes' => [
+                        ['name' => 'scratch', 'emptyDir' => []],
+                    ],
+                ],
+            ])
+            ->createOrUpdate();
+
+        try {
+            $fetched = $this->cluster->getDeploymentByName('patch-empty-dir-test');
+
+            $template = $fetched->getAttribute('spec.template');
+
+            $this->assertSame(
+                [],
+                $template['spec']['volumes'][0]['emptyDir'],
+                'The apiserver returns emptyDir: {} which decodes to an empty PHP array.'
+            );
+
+            $template['metadata']['labels']['patched'] = 'true';
+
+            $patched = $fetched->jsonPatch([
+                ['op' => 'replace', 'path' => '/spec/template', 'value' => $template],
+            ]);
+
+            $this->assertSame('true', $patched->getAttribute('spec.template.metadata.labels.patched'));
+            $this->assertSame([], $patched->getAttribute('spec.template.spec.volumes')[0]['emptyDir']);
+        } finally {
+            $deployment->delete();
+        }
+    }
 }
