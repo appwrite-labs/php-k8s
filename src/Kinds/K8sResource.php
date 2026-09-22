@@ -12,6 +12,8 @@ use RenokiCo\PhpK8s\Exceptions\KubernetesLogsException;
 use RenokiCo\PhpK8s\Exceptions\KubernetesWatchException;
 use RenokiCo\PhpK8s\K8s;
 use RenokiCo\PhpK8s\KubernetesCluster;
+use RenokiCo\PhpK8s\Patches\JsonMergePatch;
+use RenokiCo\PhpK8s\Patches\JsonPatch;
 use RenokiCo\PhpK8s\Traits\Resource\HasAnnotations;
 use RenokiCo\PhpK8s\Traits\Resource\HasAttributes;
 use RenokiCo\PhpK8s\Traits\Resource\HasEvents;
@@ -157,6 +159,47 @@ class K8sResource implements Arrayable, Jsonable
     }
 
     /**
+     * Convert a JSON Patch (RFC 6902) to the JSON payload sent to the cluster,
+     * coercing empty map fields inside operation values from [] to {} like
+     * toJsonPayload does for full payloads. A value that is itself an empty
+     * array stays a list, so clearing list fields (e.g. finalizers) works.
+     *
+     * @throws \JsonException
+     */
+    public function toJsonPatchPayload(JsonPatch|array $patch): string
+    {
+        $operations = $patch instanceof JsonPatch ? $patch->toArray() : $patch;
+
+        foreach ($operations as $index => $operation) {
+            $value = $operation['value'] ?? null;
+
+            if (is_array($value) && $value !== []) {
+                $operations[$index]['value'] = $this->coerceEmptyArraysToObjects($value);
+            }
+        }
+
+        return json_encode($operations, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Convert a JSON Merge Patch (RFC 7396) to the JSON payload sent to the
+     * cluster, coercing empty map fields from [] to {} like toJsonPayload
+     * does for full payloads. An empty patch encodes as {} because a merge
+     * patch document is always a JSON object.
+     *
+     * @throws \JsonException
+     */
+    public function toJsonMergePatchPayload(JsonMergePatch|array $patch): string
+    {
+        $document = $patch instanceof JsonMergePatch ? $patch->toArray() : $patch;
+
+        return json_encode(
+            $document === [] ? (object) [] : $this->coerceEmptyArraysToObjects($document),
+            JSON_THROW_ON_ERROR
+        );
+    }
+
+    /**
      * Kubernetes map fields are encoded by PHP's json_encode as `[]` when empty,
      * but the API expects `{}` for objects. Walk the decoded structure and convert
      * every empty array into an empty object so the byte sequence is only ever
@@ -171,7 +214,7 @@ class K8sResource implements Arrayable, Jsonable
      */
     protected function coerceEmptyArraysToObjects(array $attributes): array
     {
-        $emptyArrayLists = ['allowedTopologies', 'mountOptions', 'accessModes'];
+        $emptyArrayLists = ['allowedTopologies', 'mountOptions', 'accessModes', 'finalizers', 'conditions'];
 
         foreach ($attributes as $key => $value) {
             if (! is_array($value)) {
