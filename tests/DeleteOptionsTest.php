@@ -100,8 +100,11 @@ class DeleteOptionsTest extends TestCase
         $this->assertTrue($job->delete(gracePeriod: 30, propagationPolicy: PropagationPolicy::BACKGROUND));
 
         $requests = $cluster->requests();
-        $delete = end($requests);
 
+        $this->assertCount(2, $requests, 'delete() refreshes the resource, then deletes it');
+        $this->assertSame('GET', $requests[0]->getMethod());
+
+        $delete = $requests[1];
         $this->assertSame('DELETE', $delete->getMethod());
 
         $sent = json_decode((string) $delete->getBody(), true);

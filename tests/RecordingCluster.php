@@ -20,30 +20,49 @@ class RecordingCluster extends KubernetesCluster
     /** @var array<int, array{request: RequestInterface}> */
     public array $transactions = [];
 
-    /** @var array<int, Response> */
-    protected array $responses = [];
+    protected ?MockHandler $handler = null;
+
+    protected ?Client $client = null;
 
     /**
      * @param  array<int, array<string, mixed>>  $bodies
      */
     public function respondWith(array $bodies): static
     {
+        $this->handler ??= new MockHandler;
+
         foreach ($bodies as $body) {
-            $this->responses[] = new Response(200, ['Content-Type' => 'application/json'], json_encode($body));
+            $this->handler->append(
+                new Response(200, ['Content-Type' => 'application/json'], json_encode($body))
+            );
         }
 
         return $this;
     }
 
+    /**
+     * One client, and therefore one response queue, for the life of the
+     * cluster: a fresh handler per call would replay the first response to
+     * every request and no multi-request flow could be modelled.
+     */
     #[Override]
     public function getClient(): Client
     {
-        $stack = HandlerStack::create(new MockHandler($this->responses));
-        $stack->push(Middleware::history($this->transactions));
+        if ($this->client === null) {
+            $this->handler ??= new MockHandler;
 
-        return new Client(['handler' => $stack]);
+            $stack = HandlerStack::create($this->handler);
+            $stack->push(Middleware::history($this->transactions));
+
+            $this->client = new Client(['handler' => $stack]);
+        }
+
+        return $this->client;
     }
 
+    /**
+     * @return array<int, RequestInterface>
+     */
     public function requests(): array
     {
         return array_map(
