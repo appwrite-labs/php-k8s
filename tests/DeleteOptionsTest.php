@@ -2,6 +2,9 @@
 
 namespace RenokiCo\PhpK8s\Test;
 
+use InvalidArgumentException;
+use RenokiCo\PhpK8s\Enums\PropagationPolicy;
+
 class DeleteOptionsTest extends TestCase
 {
     public function test_propagation_policy_is_a_top_level_delete_options_field()
@@ -55,6 +58,26 @@ class DeleteOptionsTest extends TestCase
         $this->assertArrayNotHasKey('preconditions', $options);
     }
 
+    public function test_invalid_propagation_policy_is_rejected_before_the_request()
+    {
+        $job = $this->cluster->job()->setName('reap');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid propagation policy "foreground"');
+
+        $job->deleteOptions(null, 'foreground');
+    }
+
+    public function test_propagation_policy_accepts_the_enum()
+    {
+        $job = $this->cluster->job()->setName('reap');
+
+        $this->assertSame(
+            'Orphan',
+            $job->deleteOptions(null, PropagationPolicy::ORPHAN)['propagationPolicy']
+        );
+    }
+
     public function test_delete_options_payload_shape_matches_the_kubernetes_api()
     {
         $job = $this->cluster->job()->setName('reap');
@@ -73,7 +96,7 @@ class DeleteOptionsTest extends TestCase
             ],
         ]);
 
-        $payload = json_decode(json_encode($job->deleteOptions(null, 'Foreground')), true);
+        $payload = $job->deleteOptions(null, 'Foreground');
 
         $this->assertSame(
             [

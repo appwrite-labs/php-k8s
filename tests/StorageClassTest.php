@@ -130,6 +130,8 @@ class StorageClassTest extends TestCase
 
         $this->assertTrue($sc->delete());
 
+        $this->waitUntilDeleted($sc);
+
         $this->expectException(KubernetesAPIException::class);
 
         $this->cluster->getStorageClassByName('io1');
