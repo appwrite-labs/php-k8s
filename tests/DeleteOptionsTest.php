@@ -78,6 +78,43 @@ class DeleteOptionsTest extends TestCase
         );
     }
 
+    public function test_delete_sends_the_propagation_policy_at_the_top_level()
+    {
+        $cluster = (new RecordingCluster('http://127.0.0.1:8080'))
+            ->respondWith([
+                ['kind' => 'Job', 'apiVersion' => 'batch/v1', 'metadata' => [
+                    'name' => 'reap',
+                    'uid' => 'aa11bb22-cc33-dd44-ee55-ff6677889900',
+                ]],
+                ['kind' => 'Status', 'apiVersion' => 'v1', 'status' => 'Success'],
+            ]);
+
+        $job = $cluster->job()->setName('reap');
+        $job->syncWith([
+            'metadata' => [
+                'name' => 'reap',
+                'uid' => 'aa11bb22-cc33-dd44-ee55-ff6677889900',
+            ],
+        ]);
+
+        $this->assertTrue($job->delete(gracePeriod: 30, propagationPolicy: PropagationPolicy::BACKGROUND));
+
+        $requests = $cluster->requests();
+        $delete = end($requests);
+
+        $this->assertSame('DELETE', $delete->getMethod());
+
+        $sent = json_decode((string) $delete->getBody(), true);
+
+        $this->assertSame('Background', $sent['propagationPolicy'] ?? null);
+        $this->assertSame(30, $sent['gracePeriodSeconds'] ?? null);
+        $this->assertSame(
+            ['uid' => 'aa11bb22-cc33-dd44-ee55-ff6677889900'],
+            $sent['preconditions'] ?? null,
+            'only the uid belongs in preconditions'
+        );
+    }
+
     public function test_delete_options_payload_shape_matches_the_kubernetes_api()
     {
         $job = $this->cluster->job()->setName('reap');
