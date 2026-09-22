@@ -7,6 +7,7 @@ use RenokiCo\PhpK8s\Exceptions\PhpK8sException;
 use RenokiCo\PhpK8s\Instances\Container;
 use RenokiCo\PhpK8s\K8s;
 use RenokiCo\PhpK8s\Kinds\K8sPod;
+use RenokiCo\PhpK8s\Kinds\K8sResource;
 use RenokiCo\PhpK8s\KubernetesCluster;
 use RenokiCo\PhpK8s\PhpK8sServiceProvider;
 
@@ -63,6 +64,28 @@ abstract class TestCase extends Orchestra
     public function getEnvironmentSetUp($app)
     {
         //
+    }
+
+    /**
+     * Foreground propagation keeps a deleted resource readable until its
+     * dependents are gone, so a 404 is not immediate after delete().
+     */
+    protected function waitUntilDeleted(K8sResource $resource, int $timeout = 60): void
+    {
+        $deadline = time() + $timeout;
+
+        while ($resource->exists()) {
+            if (time() >= $deadline) {
+                self::fail(sprintf(
+                    '%s "%s" still exists %d seconds after delete()',
+                    $resource::getKind(),
+                    $resource->getName(),
+                    $timeout
+                ));
+            }
+
+            sleep(1);
+        }
     }
 
     /**
