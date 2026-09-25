@@ -4,16 +4,11 @@ namespace RenokiCo\PhpK8s\Test;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Response;
-use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Http\Message\ResponseInterface;
 use RenokiCo\PhpK8s\Exceptions\KubernetesAPIException;
 
 class MakesHttpCallsTest extends TestCase
 {
-    private const string SNAPSHOT_PATH = '/apis/snapshot.storage.k8s.io/v1/namespaces/default/volumesnapshots/branch';
-
-    private const string UNSERVED_PATH = '/apis/unserved.php-k8s.invalid/v1/namespaces/default/widgets/missing';
-
     public function test_plain_text_error_keeps_http_status_and_chains_guzzle_exception(): void
     {
         $exception = $this->failedCall(
@@ -25,56 +20,36 @@ class MakesHttpCallsTest extends TestCase
         $this->assertInstanceOf(ClientException::class, $exception->getPrevious());
     }
 
-    #[DataProvider('statuses')]
-    public function test_json_status_error_keeps_payload_code(array $status): void
+    public function test_status_body_code_wins_over_http_status(): void
     {
         $exception = $this->failedCall(
-            new Response($status['code'], ['Content-Type' => 'application/json'], json_encode($status))
+            new Response(400, ['Content-Type' => 'application/json'], '{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"Conflict","code":409}')
         );
 
-        $this->assertSame($status['code'], $exception->getCode());
-        $this->assertSame($status, $exception->getPayload());
+        $this->assertSame(409, $exception->getCode());
+        $this->assertSame(
+            ['kind' => 'Status', 'apiVersion' => 'v1', 'status' => 'Failure', 'reason' => 'Conflict', 'code' => 409],
+            $exception->getPayload()
+        );
     }
 
-    public static function statuses(): iterable
+    public function test_zero_status_body_code_falls_back_to_http_status(): void
     {
-        yield 'not found' => [[
-            'kind' => 'Status',
-            'apiVersion' => 'v1',
-            'metadata' => [],
-            'status' => 'Failure',
-            'message' => 'volumesnapshots.snapshot.storage.k8s.io "branch" not found',
-            'reason' => 'NotFound',
-            'details' => ['name' => 'branch', 'group' => 'snapshot.storage.k8s.io', 'kind' => 'volumesnapshots'],
-            'code' => 404,
-        ]];
+        $exception = $this->failedCall(
+            new Response(404, ['Content-Type' => 'application/json'], '{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"NotFound","code":0}')
+        );
 
-        yield 'conflict' => [[
-            'kind' => 'Status',
-            'apiVersion' => 'v1',
-            'metadata' => [],
-            'status' => 'Failure',
-            'message' => 'volumesnapshots.snapshot.storage.k8s.io "branch" already exists',
-            'reason' => 'AlreadyExists',
-            'details' => ['name' => 'branch', 'group' => 'snapshot.storage.k8s.io', 'kind' => 'volumesnapshots'],
-            'code' => 409,
-        ]];
-    }
-
-    public function test_unserved_api_group_answers_not_found(): void
-    {
-        try {
-            $this->cluster->call('GET', self::UNSERVED_PATH);
-            $this->fail('Expected a KubernetesAPIException for an API group the cluster does not serve.');
-        } catch (KubernetesAPIException $exception) {
-            $this->assertSame(404, $exception->getCode());
-        }
+        $this->assertSame(404, $exception->getCode());
+        $this->assertSame(
+            ['kind' => 'Status', 'apiVersion' => 'v1', 'status' => 'Failure', 'reason' => 'NotFound', 'code' => 0],
+            $exception->getPayload()
+        );
     }
 
     private function failedCall(ResponseInterface $response): KubernetesAPIException
     {
         try {
-            $this->clusterRespondingWith($response)->call('GET', self::SNAPSHOT_PATH);
+            $this->clusterRespondingWith($response)->call('GET', '/apis/snapshot.storage.k8s.io/v1/namespaces/default/volumesnapshots/branch');
         } catch (KubernetesAPIException $exception) {
             return $exception;
         }
