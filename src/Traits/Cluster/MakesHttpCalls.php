@@ -128,14 +128,8 @@ trait MakesHttpCalls
             }
 
             $response = $this->getClient()->request($method, $this->getCallableUrl($path, $query), $requestOptions);
-        } catch (ClientException $e) {
-            $errorPayload = json_decode((string) $e->getResponse()->getBody(), true);
-
-            throw new KubernetesAPIException(
-                $e->getMessage(),
-                $errorPayload['code'] ?? 0,
-                $errorPayload
-            );
+        } catch (ClientException $exception) {
+            throw KubernetesAPIException::from($exception);
         }
 
         return $response;
