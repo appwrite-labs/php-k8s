@@ -2,7 +2,11 @@
 
 namespace RenokiCo\PhpK8s\Test;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Psr\Http\Message\ResponseInterface;
 use RenokiCo\PhpK8s\Exceptions\PhpK8sException;
 use RenokiCo\PhpK8s\Instances\Container;
 use RenokiCo\PhpK8s\K8s;
@@ -190,5 +194,22 @@ abstract class TestCase extends Orchestra
         }
 
         return $pod;
+    }
+
+    protected function clusterRespondingWith(ResponseInterface $response): KubernetesCluster
+    {
+        return new class(HandlerStack::create(new MockHandler([$response]))) extends KubernetesCluster
+        {
+            public function __construct(private readonly HandlerStack $handler)
+            {
+                parent::__construct('https://kubernetes.test');
+            }
+
+            #[\Override]
+            public function getClient(): Client
+            {
+                return new Client(['handler' => $this->handler]);
+            }
+        };
     }
 }
