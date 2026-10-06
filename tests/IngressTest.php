@@ -178,6 +178,8 @@ class IngressTest extends TestCase
 
         $this->assertTrue($ingress->delete());
 
+        $this->waitUntilDeleted($ingress);
+
         $this->expectException(KubernetesAPIException::class);
 
         $this->cluster->getIngressByName('nginx');

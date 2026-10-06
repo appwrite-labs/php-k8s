@@ -139,6 +139,8 @@ class CSIDriverTest extends TestCase
 
         $this->assertTrue($csiDriver->delete());
 
+        $this->waitUntilDeleted($csiDriver);
+
         $this->expectException(KubernetesAPIException::class);
 
         $this->cluster->getCSIDriverByName('test-csi-driver.example.com');
