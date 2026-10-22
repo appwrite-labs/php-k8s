@@ -8,6 +8,12 @@ on:
       - '.github/workflows/docs-deploy.yml'
       - 'package.json'
       - 'package-lock.json'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs-deploy.yml'
+      - 'package.json'
+      - 'package-lock.json'
   workflow_dispatch:
 
 jobs:
