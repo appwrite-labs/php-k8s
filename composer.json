@@ -57,7 +57,7 @@
         "test": "vendor/bin/phpunit"
     },
     "require-dev": {
-        "laravel/pint": "^1.29",
+        "laravel/pint": "^1.32",
         "mockery/mockery": "^1.6",
         "orchestra/testbench": "^10.9.0",
         "phpunit/phpunit": "^11.5",
