@@ -178,7 +178,9 @@ class K8sResource implements Arrayable, Jsonable
             }
         }
 
-        return json_encode($operations, JSON_THROW_ON_ERROR);
+        // The API server compares a test operation's strings by their encoded bytes,
+        // so `\/` never matches a stored `/` and the patch is refused.
+        return json_encode($operations, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
     /**
@@ -195,7 +197,7 @@ class K8sResource implements Arrayable, Jsonable
 
         return json_encode(
             $document === [] ? (object) [] : $this->coerceEmptyArraysToObjects($document),
-            JSON_THROW_ON_ERROR
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
         );
     }
 
