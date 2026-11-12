@@ -31,22 +31,22 @@ jobs:
     name: PHP ${{ matrix.php }} - K8s v${{ matrix.kubernetes }}
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: ${{ matrix.php }}
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, yaml
           coverage: pcov
 
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         name: Cache dependencies
         with:
           path: ~/.composer/cache/files
           key: composer-php-${{ matrix.php }}-${{ hashFiles('composer.json') }}
 
-      - uses: medyagh/setup-minikube@latest
+      - uses: medyagh/setup-minikube@e9e035a86bbc3caea26a450bd4dbf9d0c453682e # latest
         name: Setup Minikube
         with:
           minikube-version: 1.38.1
@@ -92,6 +92,6 @@ jobs:
         run: |
           vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
 
-      - uses: codecov/codecov-action@v7
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         with:
           fail_ci_if_error: false
