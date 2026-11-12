@@ -108,11 +108,34 @@ class PatchPayloadTest extends TestCase
         ]);
 
         $this->assertSame(
-            '[{"op":"replace","path":"\/spec\/replicas","value":3},'
-            .'{"op":"remove","path":"\/metadata\/labels\/deprecated"},'
-            .'{"op":"add","path":"\/metadata\/labels\/app","value":null}]',
+            '[{"op":"replace","path":"/spec/replicas","value":3},'
+            .'{"op":"remove","path":"/metadata/labels/deprecated"},'
+            .'{"op":"add","path":"/metadata/labels/app","value":null}]',
             $payload
         );
+    }
+
+    public function test_json_patch_test_values_keep_slashes_and_unicode_verbatim()
+    {
+        $payload = $this->cluster->statefulSet()->toJsonPatchPayload([
+            ['op' => 'test', 'path' => '/spec/template/spec/initContainers', 'value' => [
+                ['name' => 'init', 'command' => ['sh', '-c', "chmod 1777 '/var/run/mysqld'"], 'env' => [['name' => 'NOTE', 'value' => 'café']]],
+            ]],
+        ]);
+
+        $this->assertStringContainsString("'/var/run/mysqld'", $payload);
+        $this->assertStringContainsString('"path":"/spec/template/spec/initContainers"', $payload);
+        $this->assertStringContainsString('café', $payload);
+        $this->assertStringNotContainsString('\\/', $payload);
+    }
+
+    public function test_json_merge_patch_keeps_slashes_verbatim()
+    {
+        $payload = $this->cluster->statefulSet()->toJsonMergePatchPayload([
+            'metadata' => ['annotations' => ['appwrite.io/owner' => 'a/b']],
+        ]);
+
+        $this->assertStringContainsString('"appwrite.io/owner":"a/b"', $payload);
     }
 
     public function test_empty_json_patch_encodes_as_list()
