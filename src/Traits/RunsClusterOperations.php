@@ -3,12 +3,14 @@
 namespace RenokiCo\PhpK8s\Traits;
 
 use Closure;
+use InvalidArgumentException;
 use RenokiCo\PhpK8s\Contracts\Attachable;
 use RenokiCo\PhpK8s\Contracts\Executable;
 use RenokiCo\PhpK8s\Contracts\Loggable;
 use RenokiCo\PhpK8s\Contracts\Scalable;
 use RenokiCo\PhpK8s\Contracts\Watchable;
 use RenokiCo\PhpK8s\Enums\Operation;
+use RenokiCo\PhpK8s\Enums\PropagationPolicy;
 use RenokiCo\PhpK8s\Exceptions\KubernetesAPIException;
 use RenokiCo\PhpK8s\Exceptions\KubernetesAttachException;
 use RenokiCo\PhpK8s\Exceptions\KubernetesExecException;
@@ -233,37 +235,75 @@ trait RunsClusterOperations
     /**
      * Delete the resource.
      *
-     * @param  null|int  $gracePeriod
-     *
      * @throws KubernetesAPIException
      */
-    public function delete(array $query = ['pretty' => 1], $gracePeriod = null, string $propagationPolicy = 'Foreground'): bool
+    public function delete(array $query = ['pretty' => 1], ?int $gracePeriod = null, PropagationPolicy|string $propagationPolicy = PropagationPolicy::FOREGROUND): bool
     {
         if (! $this->isSynced()) {
             return true;
         }
 
-        $this->setAttribute('preconditions', [
-            'resourceVersion' => $this->getResourceVersion(),
-            'uid' => $this->getResourceUid(),
-            'propagationPolicy' => $propagationPolicy,
-            'gracePeriodSeconds' => $gracePeriod,
-        ]);
-
         $this->refresh();
+
+        $payload = json_encode(
+            $this->deleteOptions($gracePeriod, $propagationPolicy),
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
+        );
 
         $this->cluster
             ->setResourceClass(get_class($this))
             ->runOperation(
                 Operation::DELETE,
                 $this->resourcePath(),
-                $this->toJsonPayload('DeleteOptions'),
+                $payload,
                 $query
             );
 
         $this->synced = false;
 
         return true;
+    }
+
+    /**
+     * Build the DeleteOptions payload for the delete operation.
+     * The propagationPolicy and gracePeriodSeconds fields are top-level
+     * DeleteOptions fields; only the resource uid belongs in preconditions.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws InvalidArgumentException
+     */
+    public function deleteOptions(?int $gracePeriod = null, PropagationPolicy|string $propagationPolicy = PropagationPolicy::FOREGROUND): array
+    {
+        $policy = $propagationPolicy instanceof PropagationPolicy
+            ? $propagationPolicy
+            : PropagationPolicy::tryFrom($propagationPolicy);
+
+        if (is_null($policy)) {
+            throw new InvalidArgumentException(sprintf(
+                'Invalid propagation policy "%s"; expected one of %s',
+                $propagationPolicy,
+                implode(', ', array_column(PropagationPolicy::cases(), 'value'))
+            ));
+        }
+
+        $options = [
+            'apiVersion' => 'v1',
+            'kind' => 'DeleteOptions',
+            'propagationPolicy' => $policy->value,
+        ];
+
+        if (! is_null($gracePeriod)) {
+            $options['gracePeriodSeconds'] = $gracePeriod;
+        }
+
+        if (! is_null($uid = $this->getResourceUid())) {
+            $options['preconditions'] = [
+                'uid' => $uid,
+            ];
+        }
+
+        return $options;
     }
 
     /**

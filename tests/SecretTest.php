@@ -149,6 +149,8 @@ class SecretTest extends TestCase
 
         $this->assertTrue($secret->delete());
 
+        $this->waitUntilDeleted($secret);
+
         $this->expectException(KubernetesAPIException::class);
 
         $this->cluster->getSecretByName('passwords');

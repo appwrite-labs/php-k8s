@@ -184,25 +184,35 @@ The `delete()` method accepts optional parameters for fine-grained control:
 public function delete(
     array $query = ['pretty' => 1],
     ?int $gracePeriod = null,
-    string $propagationPolicy = 'Foreground'
+    PropagationPolicy|string $propagationPolicy = PropagationPolicy::FOREGROUND
 ): bool
 ```
 
 Example with options:
 
 ```php
+use RenokiCo\PhpK8s\Enums\PropagationPolicy;
+
 // Delete with 30-second grace period
 $pod->delete(
     query: ['pretty' => 1],
     gracePeriod: 30,
-    propagationPolicy: 'Foreground'
+    propagationPolicy: PropagationPolicy::FOREGROUND
 );
 ```
 
 **Propagation Policies:**
-- `Foreground` - Waits for dependents to be deleted first
-- `Background` - Deletes immediately, dependents deleted in background
-- `Orphan` - Leaves dependents orphaned
+- `PropagationPolicy::FOREGROUND` - Waits for dependents to be deleted first
+- `PropagationPolicy::BACKGROUND` - Deletes immediately, dependents deleted in background
+- `PropagationPolicy::ORPHAN` - Leaves dependents orphaned
+
+The equivalent strings (`'Foreground'`, `'Background'`, `'Orphan'`) are still
+accepted; anything else raises an `InvalidArgumentException` before the request
+is sent, rather than being rejected by the API.
+
+Under `Foreground`, the resource stays readable until its dependents are gone,
+so a `get()` immediately after `delete()` returns the resource with a
+`deletionTimestamp` instead of a 404.
 
 ## Creating or Updating Resources
 
